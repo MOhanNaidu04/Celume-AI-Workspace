@@ -46,6 +46,8 @@ export default function RegisterPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [fieldErrors, setFieldErrors] = useState({
@@ -274,16 +276,36 @@ export default function RegisterPage() {
               <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-2">
                 Password <span className="text-red-500">*</span>
               </label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => { setPassword(e.target.value); clearFieldError('password'); clearFieldError('confirmPassword'); }}
-                onBlur={() => handleFieldBlur('password')}
-                placeholder="••••••••"
-                autoComplete="new-password"
-                className={inputClass('password')}
-              />
+              <div className="relative">
+                <input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => { setPassword(e.target.value); clearFieldError('password'); clearFieldError('confirmPassword'); }}
+                  onBlur={() => handleFieldBlur('password')}
+                  placeholder="••••••••"
+                  autoComplete="new-password"
+                  className={`${inputClass('password')} pr-12`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  className="absolute inset-y-0 right-4 flex items-center text-slate-500 hover:text-slate-700 transition"
+                >
+                  {showPassword ? (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-5 0-9.27-3.11-11-7 0 0 1.646-3.504 5.5-5.742M6.223 6.223A10.043 10.043 0 0112 5c5 0 9.27 3.11 11 7-.447.956-1.126 1.924-2.012 2.847M9.88 9.88a3 3 0 104.243 4.243" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3l18 18" />
+                    </svg>
+                  ) : (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.25 12s3.75-7.5 9.75-7.5 9.75 7.5 9.75 7.5-3.75 7.5-9.75 7.5S2.25 12 2.25 12z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15.75a3.75 3.75 0 100-7.5 3.75 3.75 0 000 7.5z" />
+                    </svg>
+                  )}
+                </button>
+              </div>
               <FieldError name="password" />
               {!fieldErrors.password && password && (
                 <p className="mt-1 text-xs text-slate-400">
@@ -297,16 +319,36 @@ export default function RegisterPage() {
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-slate-700 mb-2">
                 Confirm Password <span className="text-red-500">*</span>
               </label>
-              <input
-                id="confirmPassword"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => { setConfirmPassword(e.target.value); clearFieldError('confirmPassword'); }}
-                onBlur={() => handleFieldBlur('confirmPassword')}
-                placeholder="••••••••"
-                autoComplete="new-password"
-                className={inputClass('confirmPassword')}
-              />
+              <div className="relative">
+                <input
+                  id="confirmPassword"
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  value={confirmPassword}
+                  onChange={(e) => { setConfirmPassword(e.target.value); clearFieldError('confirmPassword'); }}
+                  onBlur={() => handleFieldBlur('confirmPassword')}
+                  placeholder="••••••••"
+                  autoComplete="new-password"
+                  className={`${inputClass('confirmPassword')} pr-12`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword((prev) => !prev)}
+                  aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
+                  className="absolute inset-y-0 right-4 flex items-center text-slate-500 hover:text-slate-700 transition"
+                >
+                  {showConfirmPassword ? (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-5 0-9.27-3.11-11-7 0 0 1.646-3.504 5.5-5.742M6.223 6.223A10.043 10.043 0 0112 5c5 0 9.27 3.11 11 7-.447.956-1.126 1.924-2.012 2.847M9.88 9.88a3 3 0 104.243 4.243" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3l18 18" />
+                    </svg>
+                  ) : (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.25 12s3.75-7.5 9.75-7.5 9.75 7.5 9.75 7.5-3.75 7.5-9.75 7.5S2.25 12 2.25 12z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15.75a3.75 3.75 0 100-7.5 3.75 3.75 0 000 7.5z" />
+                    </svg>
+                  )}
+                </button>
+              </div>
               <FieldError name="confirmPassword" />
             </div>
 

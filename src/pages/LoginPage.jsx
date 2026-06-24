@@ -20,6 +20,7 @@ function validatePassword(password) {
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [fieldErrors, setFieldErrors] = useState({ email: '', password: '' });
@@ -184,18 +185,38 @@ export default function LoginPage() {
               <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-2">
                 Password
               </label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => { setPassword(e.target.value); setFieldErrors((p) => ({ ...p, password: '' })); }}
-                onBlur={() => handleFieldBlur('password')}
-                placeholder="••••••••"
-                autoComplete="current-password"
-                className={`w-full px-4 py-3 bg-slate-50 border rounded-2xl text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition ${
-                  fieldErrors.password ? 'border-red-400 bg-red-50' : 'border-slate-300'
-                }`}
-              />
+              <div className="relative">
+                <input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => { setPassword(e.target.value); setFieldErrors((p) => ({ ...p, password: '' })); }}
+                  onBlur={() => handleFieldBlur('password')}
+                  placeholder="••••••••"
+                  autoComplete="current-password"
+                  className={`w-full px-4 py-3 pr-12 bg-slate-50 border rounded-2xl text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition ${
+                    fieldErrors.password ? 'border-red-400 bg-red-50' : 'border-slate-300'
+                  }`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  className="absolute inset-y-0 right-4 flex items-center text-slate-500 hover:text-slate-700 transition"
+                >
+                  {showPassword ? (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-5 0-9.27-3.11-11-7 0 0 1.646-3.504 5.5-5.742M6.223 6.223A10.043 10.043 0 0112 5c5 0 9.27 3.11 11 7-.447.956-1.126 1.924-2.012 2.847M9.88 9.88a3 3 0 104.243 4.243" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3l18 18" />
+                    </svg>
+                  ) : (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.25 12s3.75-7.5 9.75-7.5 9.75 7.5 9.75 7.5-3.75 7.5-9.75 7.5S2.25 12 2.25 12z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15.75a3.75 3.75 0 100-7.5 3.75 3.75 0 000 7.5z" />
+                    </svg>
+                  )}
+                </button>
+              </div>
               {fieldErrors.password && (
                 <p role="alert" className="mt-1.5 text-xs text-red-600 flex items-center gap-1">
                   <svg className="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
