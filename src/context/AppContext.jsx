@@ -86,7 +86,17 @@ export function AppProvider({ children }) {
 
   const sendMessage = useCallback(
     async (text, onNotify) => {
-      if (!text.trim() || loading) return;
+      if (!text.trim()) {
+        console.warn('[AppContext] sendMessage called with empty text — ignoring.');
+        return;
+      }
+      if (loading) {
+        console.warn('[AppContext] sendMessage called while already loading — ignoring.');
+        return;
+      }
+
+      console.log('[AppContext] Sending message to chat "%s" (id: %s): "%s"',
+        selectedChat?.title, selectedChatId, text.trim().slice(0, 60));
 
       const userMessage = { role: 'user', text: text.trim(), timestamp: formatTime() };
 
@@ -107,6 +117,7 @@ export function AppProvider({ children }) {
       setLoading(true);
 
       try {
+        console.log('[AppContext] Simulating AI response for category "%s"...', selectedChat?.category);
         const answer = await simulateAIResponse(text.trim(), selectedChat.category);
         const assistantMessage = { role: 'assistant', text: answer, timestamp: formatTime() };
 
@@ -120,9 +131,11 @@ export function AppProvider({ children }) {
           updatedAt: formatRelativeTime(),
         });
 
+        console.log('[AppContext] AI response received (%d chars).', answer.length);
         onNotify?.('Response ready', 'AI replied to your message.');
-      } catch {
-        onNotify?.('Error', 'Something went wrong. Please try again.', 'error');
+      } catch (err) {
+        console.error('[AppContext] AI simulation threw an error:', err);
+        onNotify?.('Something went wrong', 'The AI could not generate a response. Please try again.', 'error');
       } finally {
         setLoading(false);
       }
@@ -133,7 +146,14 @@ export function AppProvider({ children }) {
   const usePromptTemplate = useCallback(
     (promptId) => {
       const template = promptTemplates.find((p) => p.id === promptId);
-      if (!template) return '';
+      if (!template) {
+        console.warn('[AppContext] usePromptTemplate: no template found for id "%s"', promptId);
+        return '';
+      }
+
+      console.log('[AppContext] Using prompt template "%s" (id: %s). Usage count: %d → %d',
+        template.title, promptId,
+        promptUsage[promptId] ?? 0, (promptUsage[promptId] ?? 0) + 1);
 
       setPromptUsage((prev) => ({
         ...prev,
@@ -142,7 +162,7 @@ export function AppProvider({ children }) {
 
       return template.prompt;
     },
-    [setPromptUsage]
+    [setPromptUsage, promptUsage]
   );
 
   const toggleFavorite = useCallback(
@@ -156,10 +176,12 @@ export function AppProvider({ children }) {
 
   const createNewChat = useCallback(
     (category = 'business') => {
+      console.log('[AppContext] Creating new chat with category "%s".', category);
       const chat = createEmptyChat(category);
       setChats((prev) => [chat, ...prev]);
       setMessagesByChat((prev) => ({ ...prev, [chat.id]: [] }));
       setSelectedChatId(chat.id);
+      console.log('[AppContext] New chat created — id: %s, title: "%s"', chat.id, chat.title);
       return chat;
     },
     [setChats, setMessagesByChat, setSelectedChatId]
@@ -167,6 +189,15 @@ export function AppProvider({ children }) {
 
   const deleteChat = useCallback(
     (chatId) => {
+      const chatToDelete = chats.find((c) => c.id === chatId);
+      if (!chatToDelete) {
+        console.warn('[AppContext] deleteChat: chat id "%s" not found — nothing deleted.', chatId);
+        return;
+      }
+
+      console.log('[AppContext] Deleting chat "%s" (id: %s). Chats remaining: %d',
+        chatToDelete.title, chatId, chats.length - 1);
+
       const remainingChats = chats.filter((chat) => chat.id !== chatId);
       setChats(remainingChats);
       setMessagesByChat((prev) => {
@@ -176,8 +207,10 @@ export function AppProvider({ children }) {
 
       if (selectedChatId === chatId) {
         if (remainingChats.length > 0) {
+          console.log('[AppContext] Deleted selected chat — switching to: "%s"', remainingChats[0].title);
           setSelectedChatId(remainingChats[0].id);
         } else {
+          console.log('[AppContext] No chats left after deletion — creating a fresh chat.');
           const newChat = createNewChat();
           setSelectedChatId(newChat.id);
         }

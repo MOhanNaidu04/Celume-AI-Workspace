@@ -1,5 +1,6 @@
 
 import { useEffect, useState } from 'react';
+import { apiUrl } from '../utils/api';
 
 export function useAccentColor() {
   const [accentColor, setAccentColor] = useState(() => {
@@ -20,7 +21,7 @@ export function useAccentColor() {
         return;
       }
 
-      const response = await fetch('http://localhost:4000/api/auth/profile', {
+      const response = await fetch(apiUrl('/api/auth/profile'), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

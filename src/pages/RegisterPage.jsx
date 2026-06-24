@@ -1,60 +1,163 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import Button from '../components/common/Button';
+import { apiUrl } from '../utils/api';
+
+// ─── Validation Helpers ──────────────────────────────────────────────────────
+
+function validateFullName(value) {
+  if (!value.trim()) return null; // optional field
+  if (value.trim().length < 2) return 'Full name must be at least 2 characters.';
+  return null;
+}
+
+function validateUsername(value) {
+  if (!value.trim()) return 'Username is required.';
+  if (value.trim().length < 3) return 'Username must be at least 3 characters.';
+  if (!/^[a-zA-Z0-9_]+$/.test(value.trim())) return 'Username can only contain letters, numbers, and underscores.';
+  return null;
+}
+
+function validateEmail(value) {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!value.trim()) return 'Email address is required.';
+  if (!emailRegex.test(value.trim())) return 'Please enter a valid email address (e.g. you@example.com).';
+  return null;
+}
+
+function validatePassword(value) {
+  if (!value) return 'Password is required.';
+  if (value.length < 6) return 'Password must be at least 6 characters long.';
+  if (!/[A-Za-z]/.test(value)) return 'Password must contain at least one letter.';
+  return null;
+}
+
+function validateConfirmPassword(password, confirmPassword) {
+  if (!confirmPassword) return 'Please confirm your password.';
+  if (password !== confirmPassword) return 'Passwords do not match. Please re-enter.';
+  return null;
+}
+
+// ─── Component ───────────────────────────────────────────────────────────────
 
 export default function RegisterPage() {
+  const [fullName, setFullName] = useState('');
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [fullName, setFullName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({
+    fullName: '',
+    username: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+  });
   const navigate = useNavigate();
+
+  // Validate a single field on blur
+  const handleFieldBlur = (field) => {
+    const validators = {
+      fullName: () => validateFullName(fullName),
+      username: () => validateUsername(username),
+      email: () => validateEmail(email),
+      password: () => validatePassword(password),
+      confirmPassword: () => validateConfirmPassword(password, confirmPassword),
+    };
+    const err = validators[field]?.();
+    setFieldErrors((prev) => ({ ...prev, [field]: err || '' }));
+  };
+
+  const clearFieldError = (field) =>
+    setFieldErrors((prev) => ({ ...prev, [field]: '' }));
 
   const handleRegister = async (e) => {
     e.preventDefault();
     setError('');
 
-    // Validate passwords match
-    if (password !== confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
+    // Run all validations
+    const errors = {
+      fullName: validateFullName(fullName),
+      username: validateUsername(username),
+      email: validateEmail(email),
+      password: validatePassword(password),
+      confirmPassword: validateConfirmPassword(password, confirmPassword),
+    };
 
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters');
+    const hasErrors = Object.values(errors).some(Boolean);
+    if (hasErrors) {
+      const mapped = {};
+      for (const [k, v] of Object.entries(errors)) {
+        mapped[k] = v || '';
+      }
+      setFieldErrors(mapped);
+      console.warn('[RegisterPage] Validation failed before submit:', errors);
       return;
     }
 
     setLoading(true);
+    console.log('[RegisterPage] Submitting registration for username:', username, '| email:', email);
 
     try {
-      const response = await fetch('http://localhost:4000/api/auth/register', {
+      const response = await fetch(apiUrl('/api/auth/register'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, email, password, fullName }),
+        body: JSON.stringify({
+          username: username.trim(),
+          email: email.trim(),
+          password,
+          fullName: fullName.trim(),
+        }),
       });
 
       const data = await response.json();
+      console.log('[RegisterPage] Server response status:', response.status, '| ok:', response.ok);
 
       if (!response.ok) {
-        setError(data.error || 'Registration failed');
+        const serverMessage = data.error || 'Registration failed. Please check your details and try again.';
+        console.warn('[RegisterPage] Registration rejected by server:', serverMessage);
+        setError(serverMessage);
         return;
       }
 
+      if (!data.token || !data.user) {
+        const msg = 'Unexpected response from the server. Please try again.';
+        console.error('[RegisterPage] Missing token or user in response:', data);
+        setError(msg);
+        return;
+      }
+
+      console.log('[RegisterPage] Registration successful. Storing token & user, navigating to /chat');
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
       window.dispatchEvent(new Event('storage'));
-
       navigate('/chat');
     } catch (err) {
-      setError('Connection error. Please make sure the backend is running.');
-      console.error('Register error:', err);
+      const msg = 'Unable to connect to the server. Please make sure the backend is running on port 4000.';
+      console.error('[RegisterPage] Network/fetch error:', err);
+      setError(msg);
     } finally {
       setLoading(false);
     }
   };
+
+  // Reusable field error element
+  const FieldError = ({ name }) =>
+    fieldErrors[name] ? (
+      <p role="alert" className="mt-1.5 text-xs text-red-600 flex items-center gap-1">
+        <svg className="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+        </svg>
+        {fieldErrors[name]}
+      </p>
+    ) : null;
+
+  const inputClass = (field) =>
+    `w-full px-4 py-3 bg-slate-50 border rounded-2xl text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition ${
+      fieldErrors[field] ? 'border-red-400 bg-red-50' : 'border-slate-300'
+    }`;
 
   return (
     <div className="min-h-screen flex">
@@ -64,7 +167,7 @@ export default function RegisterPage() {
           <div className="absolute top-20 left-10 w-72 h-72 bg-accent-500 rounded-full blur-3xl"></div>
           <div className="absolute bottom-20 right-10 w-72 h-72 bg-blue-500 rounded-full blur-3xl"></div>
         </div>
-        
+
         <div className="relative z-10 text-center max-w-md">
           <div className="mb-8">
             <div className="w-16 h-16 bg-accent-gradient rounded-full mx-auto flex items-center justify-center mb-6">
@@ -75,26 +178,20 @@ export default function RegisterPage() {
             <h2 className="text-4xl font-bold text-white mb-4">Celume AI</h2>
             <p className="text-xl text-slate-300 mb-8">Intelligent solutions made simple</p>
           </div>
-          
+
           <div className="space-y-4 text-left">
-            <div className="flex items-start space-x-3">
-              <svg className="w-6 h-6 text-accent-400 flex-shrink-0 mt-1" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-              <span className="text-slate-300">Fast and secure registration</span>
-            </div>
-            <div className="flex items-start space-x-3">
-              <svg className="w-6 h-6 text-accent-400 flex-shrink-0 mt-1" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-              <span className="text-slate-300">Your data is always protected</span>
-            </div>
-            <div className="flex items-start space-x-3">
-              <svg className="w-6 h-6 text-accent-400 flex-shrink-0 mt-1" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-              <span className="text-slate-300">Start creating with AI today</span>
-            </div>
+            {[
+              'Fast and secure registration',
+              'Your data is always protected',
+              'Start creating with AI today',
+            ].map((text) => (
+              <div key={text} className="flex items-start space-x-3">
+                <svg className="w-6 h-6 text-accent-400 flex-shrink-0 mt-1" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+                <span className="text-slate-300">{text}</span>
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -107,85 +204,110 @@ export default function RegisterPage() {
             <p className="text-slate-600">Join Celume AI and start creating</p>
           </div>
 
+          {/* Top-level error banner */}
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-2xl">
+            <div role="alert" className="mb-6 p-4 bg-red-50 border border-red-200 rounded-2xl flex items-start gap-3">
+              <svg className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
               <p className="text-sm text-red-700">{error}</p>
             </div>
           )}
 
-          <form onSubmit={handleRegister} className="space-y-4">
+          <form onSubmit={handleRegister} className="space-y-4" noValidate>
+            {/* Full Name */}
             <div>
               <label htmlFor="fullName" className="block text-sm font-medium text-slate-700 mb-2">
-                Full Name
+                Full Name <span className="text-slate-400 font-normal">(optional)</span>
               </label>
               <input
                 id="fullName"
                 type="text"
                 value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
+                onChange={(e) => { setFullName(e.target.value); clearFieldError('fullName'); }}
+                onBlur={() => handleFieldBlur('fullName')}
                 placeholder="John Doe"
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-2xl text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition"
+                autoComplete="name"
+                className={inputClass('fullName')}
               />
+              <FieldError name="fullName" />
             </div>
 
+            {/* Username */}
             <div>
               <label htmlFor="username" className="block text-sm font-medium text-slate-700 mb-2">
-                Username
+                Username <span className="text-red-500">*</span>
               </label>
               <input
                 id="username"
                 type="text"
                 value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                onChange={(e) => { setUsername(e.target.value); clearFieldError('username'); }}
+                onBlur={() => handleFieldBlur('username')}
                 placeholder="johndoe"
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-2xl text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition"
-                required
+                autoComplete="username"
+                className={inputClass('username')}
               />
+              <FieldError name="username" />
             </div>
 
+            {/* Email */}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-2">
-                Email Address
+                Email Address <span className="text-red-500">*</span>
               </label>
               <input
                 id="email"
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => { setEmail(e.target.value); clearFieldError('email'); }}
+                onBlur={() => handleFieldBlur('email')}
                 placeholder="you@example.com"
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-2xl text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition"
-                required
+                autoComplete="email"
+                className={inputClass('email')}
               />
+              <FieldError name="email" />
             </div>
 
+            {/* Password */}
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-2">
-                Password
+                Password <span className="text-red-500">*</span>
               </label>
               <input
                 id="password"
                 type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => { setPassword(e.target.value); clearFieldError('password'); clearFieldError('confirmPassword'); }}
+                onBlur={() => handleFieldBlur('password')}
                 placeholder="••••••••"
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-2xl text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition"
-                required
+                autoComplete="new-password"
+                className={inputClass('password')}
               />
+              <FieldError name="password" />
+              {!fieldErrors.password && password && (
+                <p className="mt-1 text-xs text-slate-400">
+                  Strength: {password.length >= 12 ? '💪 Strong' : password.length >= 8 ? '👍 Good' : '⚠️ Weak (min 6 chars)'}
+                </p>
+              )}
             </div>
 
+            {/* Confirm Password */}
             <div>
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-slate-700 mb-2">
-                Confirm Password
+                Confirm Password <span className="text-red-500">*</span>
               </label>
               <input
                 id="confirmPassword"
                 type="password"
                 value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
+                onChange={(e) => { setConfirmPassword(e.target.value); clearFieldError('confirmPassword'); }}
+                onBlur={() => handleFieldBlur('confirmPassword')}
                 placeholder="••••••••"
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-2xl text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition"
-                required
+                autoComplete="new-password"
+                className={inputClass('confirmPassword')}
               />
+              <FieldError name="confirmPassword" />
             </div>
 
             <Button
@@ -196,7 +318,7 @@ export default function RegisterPage() {
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
               </svg>
-              <span>{loading ? 'Creating account...' : 'Create Account'}</span>
+              <span>{loading ? 'Creating account…' : 'Create Account'}</span>
             </Button>
           </form>
 

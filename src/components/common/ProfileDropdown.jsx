@@ -8,8 +8,13 @@ export default function ProfileDropdown() {
   const navigate = useNavigate();
   const { notify } = useNotification();
 
-  // Get user data from localStorage
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  // Safely parse user from localStorage
+  let user = {};
+  try {
+    user = JSON.parse(localStorage.getItem('user') || '{}');
+  } catch (e) {
+    console.error('[ProfileDropdown] Failed to parse user from localStorage:', e);
+  }
   const userInitial = user.username ? user.username.charAt(0).toUpperCase() : 'U';
 
   // Close dropdown when clicking outside
@@ -25,23 +30,18 @@ export default function ProfileDropdown() {
   }, []);
 
   const handleLogout = () => {
-    // Clear authentication data
+    console.log('[ProfileDropdown] User "%s" is logging out.', user.username || 'unknown');
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    
-    // Close dropdown
     setIsOpen(false);
-    
-    // Show notification
     notify('Logged out', 'You have been successfully logged out.');
-    
-    // Redirect to login page
     setTimeout(() => {
       navigate('/login', { replace: true });
     }, 500);
   };
 
   const handleProfileClick = () => {
+    console.log('[ProfileDropdown] Navigating to profile page.');
     setIsOpen(false);
     navigate('/profile');
   };

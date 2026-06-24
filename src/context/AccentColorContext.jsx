@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react';
+import { apiUrl } from '../utils/api';
 
 const AccentColorContext = createContext();
 
@@ -21,7 +22,7 @@ export function AccentColorProvider({ children }) {
         return;
       }
 
-      const response = await fetch('http://localhost:4000/api/auth/profile', {
+      const response = await fetch(apiUrl('/api/auth/profile'), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

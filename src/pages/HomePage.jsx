@@ -29,23 +29,44 @@ export default function HomePage() {
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef(null);
 
+  // Transfer any draft prompt from another page into the local input
   useEffect(() => {
     if (draftPrompt) {
+      console.log('[HomePage] Draft prompt received from another page — loading into input.');
       setPromptText(draftPrompt);
       setDraftPrompt('');
     }
   }, [draftPrompt, setDraftPrompt]);
 
   const handleSend = async () => {
-    if (!promptText.trim()) return;
-    const text = promptText;
+    const trimmed = promptText.trim();
+
+    if (!trimmed) {
+      console.warn('[HomePage] Send attempted with empty prompt — ignored.');
+      notify('Empty message', 'Please type a message before sending.', 'error');
+      return;
+    }
+
+    if (loading) {
+      console.warn('[HomePage] Send attempted while AI is already responding — ignored.');
+      return;
+    }
+
+    console.log('[HomePage] Sending message: "%s"', trimmed.slice(0, 80));
     setPromptText('');
-    await sendMessage(text, notify);
+    await sendMessage(trimmed, notify);
   };
 
+  // Set up speech recognition
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) return;
+
+    if (!SpeechRecognition) {
+      console.warn('[HomePage] Speech Recognition API not available in this browser.');
+      return;
+    }
+
+    console.log('[HomePage] Speech Recognition API detected — initializing.');
     const recognition = new SpeechRecognition();
     recognition.lang = 'en-US';
     recognition.interimResults = true;
@@ -59,39 +80,75 @@ export default function HomePage() {
         if (event.results[i].isFinal) final += transcript;
         else interim += transcript;
       }
-      setPromptText((prev) => (prev ? prev + ' ' + final + interim : final + interim));
+      setPromptText((prev) => (prev ? `${prev} ${final}${interim}` : `${final}${interim}`));
     };
 
-    recognition.onstart = () => setIsListening(true);
-    recognition.onend = () => setIsListening(false);
+    recognition.onstart = () => {
+      console.log('[HomePage] Speech recognition started.');
+      setIsListening(true);
+    };
+
+    recognition.onend = () => {
+      console.log('[HomePage] Speech recognition ended.');
+      setIsListening(false);
+    };
+
+    recognition.onerror = (event) => {
+      console.error('[HomePage] Speech recognition error:', event.error);
+      const messages = {
+        'not-allowed': 'Microphone access was denied. Please allow microphone permission and try again.',
+        'no-speech': 'No speech was detected. Please speak clearly and try again.',
+        'network': 'Speech recognition requires a network connection. Please check your internet.',
+        'audio-capture': 'No microphone was found. Please connect a microphone and try again.',
+      };
+      const message = messages[event.error] || `Speech recognition error: ${event.error}`;
+      notify('Voice input error', message, 'error');
+      setIsListening(false);
+    };
+
     recognitionRef.current = recognition;
 
     return () => {
       try {
         recognition.stop();
-      } catch (e) {}
+      } catch (_) {
+        // Safely ignore stop errors during cleanup
+      }
       recognitionRef.current = null;
     };
-  }, []);
+  }, [notify]);
 
   const toggleListen = () => {
     const recognition = recognitionRef.current;
+
     if (!recognition) {
-      notify('Voice not supported', 'Your browser does not support speech recognition.');
+      console.warn('[HomePage] Voice input toggled but SpeechRecognition is not available.');
+      notify('Voice not supported', 'Your browser does not support speech recognition. Try Chrome or Edge.', 'error');
       return;
     }
+
     if (isListening) {
+      console.log('[HomePage] Stopping speech recognition.');
       recognition.stop();
     } else {
+      console.log('[HomePage] Starting speech recognition.');
       try {
         recognition.start();
-      } catch (e) {}
+      } catch (err) {
+        console.error('[HomePage] Failed to start speech recognition:', err);
+        notify('Voice error', 'Could not start the microphone. Please check browser permissions.', 'error');
+      }
     }
   };
 
-  const handleSelectTemplate = (text) => {
-    setPromptText(text);
-    notify('Template loaded', 'Prompt inserted into the input box.');
+  const handleSelectTemplate = (suggestion) => {
+    if (!suggestion?.text?.trim()) {
+      console.warn('[HomePage] Suggestion selected but has no text — ignored.');
+      return;
+    }
+    console.log('[HomePage] Suggestion selected: "%s"', suggestion.title);
+    setPromptText(suggestion.text);
+    notify('Template loaded', `"${suggestion.title}" inserted into the input box.`);
   };
 
   return (
@@ -105,19 +162,27 @@ export default function HomePage() {
         >
           <div className="text-center">
             <p className="text-xs uppercase tracking-[0.4em] text-accent-500 dark:text-accent-400">Celume AI</p>
-            <h1 className="mt-4 text-4xl font-semibold text-slate-950 dark:text-white">Good afternoon, Mohan</h1>
+            <h1 className="mt-4 text-4xl font-semibold text-slate-950 dark:text-white">
+              Good afternoon, Mohan
+            </h1>
           </div>
 
           <div className="mt-10 rounded-3xl bg-white/70 p-6 backdrop-blur-lg dark:bg-slate-900/70">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm text-slate-600 dark:text-slate-300">How can I help you today?</p>
-              <span className="hidden sm:inline rounded-full bg-white/5 dark:bg-white/[0.02] backdrop-blur-lg px-4 py-2 text-xs uppercase tracking-[0.24em] text-slate-700 dark:text-slate-100">Celume Ultra 3.1</span>
+              <span className="hidden sm:inline rounded-full bg-white/5 dark:bg-white/[0.02] backdrop-blur-lg px-4 py-2 text-xs uppercase tracking-[0.24em] text-slate-700 dark:text-slate-100">
+                Celume Ultra 3.1
+              </span>
             </div>
 
             <div className="mt-6 flex items-center gap-3 rounded-full bg-white px-4 py-3 shadow-soft backdrop-blur-lg dark:bg-slate-950">
               <button
                 type="button"
-                onClick={() => setPromptText('')}
+                onClick={() => {
+                  console.log('[HomePage] Clearing prompt input.');
+                  setPromptText('');
+                }}
+                title="Clear input"
                 className="h-12 w-12 rounded-full bg-accent-500 text-lg font-bold text-white transition hover:bg-accent-600"
               >
                 +
@@ -125,27 +190,34 @@ export default function HomePage() {
               <input
                 value={promptText}
                 onChange={(e) => setPromptText(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') handleSend(); }}
-                placeholder="Ask anything"
+                onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) handleSend(); }}
+                placeholder="Ask anything…"
+                aria-label="Message input"
                 className="flex-1 bg-transparent text-base text-slate-950 dark:text-white outline-none placeholder:text-slate-500 dark:placeholder:text-slate-400"
               />
               <button
                 type="button"
                 onClick={toggleListen}
-                className="ml-2 h-12 rounded-full bg-accent-500 px-6 text-sm font-semibold text-white transition hover:bg-accent-600"
+                aria-label={isListening ? 'Stop recording' : 'Start voice input'}
+                className={`ml-2 h-12 rounded-full px-6 text-sm font-semibold text-white transition ${
+                  isListening
+                    ? 'bg-red-500 hover:bg-red-600 animate-pulse'
+                    : 'bg-accent-500 hover:bg-accent-600'
+                }`}
               >
-                {isListening ? 'Stop' : 'Record'}
+                {isListening ? '⏹ Stop' : '🎙 Record'}
               </button>
             </div>
           </div>
         </motion.div>
 
+        {/* ── Quick Suggestions ─────────────────────────────────────────────── */}
         <div className="grid gap-4 sm:grid-cols-2">
           {suggestions.map((suggestion, index) => (
             <motion.button
               key={suggestion.title}
               type="button"
-              onClick={() => handleSelectTemplate(suggestion.text)}
+              onClick={() => handleSelectTemplate(suggestion)}
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               whileHover={{ y: -4 }}
