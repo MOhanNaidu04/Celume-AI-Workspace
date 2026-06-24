@@ -4,7 +4,7 @@ import { generateToken } from './auth.js';
 
 export async function registerUser(req, res) {
   try {
-    const { username, email, password, fullName, role } = req.body;
+    const { username, email, password, fullName } = req.body;
 
     // Validate input
     if (!username || !email || !password) {
@@ -26,10 +26,10 @@ export async function registerUser(req, res) {
 
     // Create user
     const result = await query(
-      `INSERT INTO users (username, email, password_hash, full_name, role, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-       RETURNING id, username, email, full_name, role, created_at`,
-      [username, email, hashedPassword, fullName || username, role || null]
+      `INSERT INTO users (username, email, password_hash, full_name, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+       RETURNING id, username, email, full_name, created_at`,
+      [username, email, hashedPassword, fullName || username]
     );
 
     const user = result.rows[0];
@@ -42,7 +42,6 @@ export async function registerUser(req, res) {
         username: user.username,
         email: user.email,
         fullName: user.full_name,
-        role: user.role,
         createdAt: user.created_at,
       },
       token,
@@ -64,7 +63,7 @@ export async function loginUser(req, res) {
 
     // Find user
     const result = await query(
-      'SELECT id, username, email, full_name, role, password_hash, created_at FROM users WHERE email = $1',
+      'SELECT id, username, email, full_name, password_hash, created_at FROM users WHERE email = $1',
       [email]
     );
 
@@ -91,7 +90,6 @@ export async function loginUser(req, res) {
         username: user.username,
         email: user.email,
         fullName: user.full_name,
-        role: user.role,
         createdAt: user.created_at,
       },
       token,
@@ -107,7 +105,7 @@ export async function getCurrentUser(req, res) {
     const { userId } = req.user;
 
     const result = await query(
-      'SELECT id, username, email, full_name, role, theme, accent_color, created_at FROM users WHERE id = $1',
+      'SELECT id, username, email, full_name, theme, accent_color, created_at FROM users WHERE id = $1',
       [userId]
     );
 
@@ -125,7 +123,7 @@ export async function getCurrentUser(req, res) {
 export async function updateUser(req, res) {
   try {
     const { userId } = req.user;
-    const { fullName, email, role, theme, accentColor } = req.body;
+    const { fullName, email, theme, accentColor } = req.body;
 
     if (email) {
       const existingUser = await query(
@@ -142,13 +140,12 @@ export async function updateUser(req, res) {
       `UPDATE users 
        SET full_name = COALESCE($2, full_name),
            email = COALESCE($3, email),
-           role = COALESCE($4, role),
-           theme = COALESCE($5, theme),
-           accent_color = COALESCE($6, accent_color),
+           theme = COALESCE($4, theme),
+           accent_color = COALESCE($5, accent_color),
            updated_at = CURRENT_TIMESTAMP
        WHERE id = $1
-       RETURNING id, username, email, full_name, role, theme, accent_color, updated_at`,
-      [userId, fullName, email, role, theme, accentColor]
+       RETURNING id, username, email, full_name, theme, accent_color, updated_at`,
+      [userId, fullName, email, theme, accentColor]
     );
 
     if (result.rows.length === 0) {
