@@ -2,6 +2,14 @@ import bcrypt from 'bcrypt';
 import { query } from '../db/db.js';
 import { generateToken, verifyToken } from '../db/auth.js';
 
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '5mb',
+    },
+  },
+};
+
 const replies = {
   marketing: 'Use customer outcomes, clear value, and a strong CTA for marketing copy.',
   sales: 'Keep it concise, benefits-led, and reference the customer pain point quickly.',
@@ -12,7 +20,7 @@ const replies = {
 
 function setCorsHeaders(res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, ngrok-skip-browser-warning');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
   res.setHeader('Cache-Control', 'no-store');
 }

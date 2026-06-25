@@ -14,8 +14,13 @@ const __dirname = path.dirname(__filename);
 const distDir = path.resolve(__dirname, 'dist');
 const hasClientBuild = fs.existsSync(path.join(distDir, 'index.html'));
 
-app.use(cors());
-app.use(express.json());
+app.use(cors({
+  origin: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'ngrok-skip-browser-warning'],
+}));
+app.options('*', cors());
+app.use(express.json({ limit: '5mb' }));
 
 if (hasClientBuild) {
   app.use(express.static(distDir));
