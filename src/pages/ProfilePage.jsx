@@ -28,6 +28,7 @@ function normalizeUser(user) {
     name: user?.fullName || user?.full_name || user?.name || user?.username || '',
     role: user?.role || '',
     email: user?.email || '',
+    avatar: user?.avatarUrl || user?.avatar_url || user?.avatar || '',
   };
 }
 
@@ -82,6 +83,7 @@ export default function ProfilePage() {
             email: data.user.email,
             fullName: data.user.full_name,
             role: data.user.role,
+            avatarUrl: data.user.avatar_url,
           }));
         }
       } catch (error) {
@@ -151,6 +153,7 @@ export default function ProfilePage() {
           fullName: profile.name.trim(),
           email: profile.email.trim(),
           role: profile.role.trim(),
+          avatarUrl: profile.avatar,
         }),
       });
 
@@ -167,6 +170,7 @@ export default function ProfilePage() {
         email: data.user.email,
         fullName: data.user.full_name,
         role: data.user.role,
+        avatarUrl: data.user.avatar_url,
       };
 
       console.log('[ProfilePage] Profile saved successfully:', updatedUser);
@@ -184,6 +188,39 @@ export default function ProfilePage() {
 
   // ── Logout ─────────────────────────────────────────────────────────────────
 
+  const handleAvatarChange = (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      notify('Invalid file', 'Please choose an image file for your profile picture.', 'error');
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      notify('Image too large', 'Please choose an image smaller than 2 MB.', 'error');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const avatar = String(reader.result || '');
+      setProfile((current) => ({ ...current, avatar }));
+      notify('Profile picture added', 'Save your profile to store it in your account.');
+    };
+    reader.onerror = () => {
+      notify('Upload failed', 'Could not read that image. Please try another one.', 'error');
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveAvatar = () => {
+    setProfile((current) => ({ ...current, avatar: '' }));
+    notify('Profile picture removed', 'Save your profile to remove it from your account.');
+  };
+
   const handleLogout = () => {
     console.log('[ProfilePage] User logging out, clearing local storage...');
     localStorage.removeItem('token');
@@ -191,6 +228,19 @@ export default function ProfilePage() {
     window.dispatchEvent(new Event('storage'));
     notify('Logged out', 'You have been successfully logged out.');
     setTimeout(() => navigate('/login', { replace: true }), 500);
+  };
+
+  const handleRemoveProfile = () => {
+    const confirmed = window.confirm('Remove this profile from this device? You will be logged out and sent to create an account again.');
+
+    if (!confirmed) return;
+
+    console.warn('[ProfilePage] Removing local profile and session data.');
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.dispatchEvent(new Event('storage'));
+    notify('Profile removed', 'Local profile data was removed from this device.');
+    setTimeout(() => navigate('/register', { replace: true }), 500);
   };
 
   const initial = (profile.name || profile.email || 'U').charAt(0).toUpperCase();
@@ -217,10 +267,31 @@ export default function ProfilePage() {
       {/* ── Profile Card ────────────────────────────────────────────────────── */}
       <Card>
         <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
-          <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-3xl bg-accent-500 text-2xl font-bold text-white">
-            {initial}
+          <div className="flex shrink-0 flex-col items-start gap-3">
+            <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-3xl bg-accent-500 text-2xl font-bold text-white sm:h-20 sm:w-20">
+              {profile.avatar ? (
+                <img src={profile.avatar} alt="Profile" className="h-full w-full object-cover" />
+              ) : (
+                initial
+              )}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <label className="cursor-pointer rounded-2xl bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-800 transition hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700">
+                Add picture
+                <input type="file" accept="image/*" onChange={handleAvatarChange} className="sr-only" />
+              </label>
+              {profile.avatar && (
+                <button
+                  type="button"
+                  onClick={handleRemoveAvatar}
+                  className="rounded-2xl px-3 py-2 text-xs font-semibold text-rose-600 transition hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/30"
+                >
+                  Remove
+                </button>
+              )}
+            </div>
           </div>
-          <div className="flex-1">
+          <div className="min-w-0 flex-1">
             <p className="text-xs uppercase tracking-[0.24em] text-slate-400">Account</p>
             <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-100 sm:text-3xl">Profile</h2>
             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
@@ -315,12 +386,19 @@ export default function ProfilePage() {
               Manage your account settings and security options.
             </p>
           </div>
-          <div className="flex gap-3 pt-2">
+          <div className="flex flex-col gap-3 pt-2 sm:flex-row">
             <Button
               onClick={handleLogout}
               className="w-full bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 sm:w-auto"
             >
               Logout
+            </Button>
+            <Button
+              variant="danger"
+              onClick={handleRemoveProfile}
+              className="w-full sm:w-auto"
+            >
+              Remove profile
             </Button>
           </div>
         </div>

@@ -28,7 +28,7 @@ export async function registerUser(req, res) {
     const result = await query(
       `INSERT INTO users (username, email, password_hash, full_name, created_at, updated_at)
        VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-       RETURNING id, username, email, full_name, created_at`,
+       RETURNING id, username, email, full_name, avatar_url, created_at`,
       [username, email, hashedPassword, fullName || username]
     );
 
@@ -42,6 +42,7 @@ export async function registerUser(req, res) {
         username: user.username,
         email: user.email,
         fullName: user.full_name,
+        avatarUrl: user.avatar_url,
         createdAt: user.created_at,
       },
       token,
@@ -63,7 +64,7 @@ export async function loginUser(req, res) {
 
     // Find user
     const result = await query(
-      'SELECT id, username, email, full_name, password_hash, created_at FROM users WHERE email = $1',
+      'SELECT id, username, email, full_name, avatar_url, password_hash, created_at FROM users WHERE email = $1',
       [email]
     );
 
@@ -90,6 +91,7 @@ export async function loginUser(req, res) {
         username: user.username,
         email: user.email,
         fullName: user.full_name,
+        avatarUrl: user.avatar_url,
         createdAt: user.created_at,
       },
       token,
@@ -105,7 +107,7 @@ export async function getCurrentUser(req, res) {
     const { userId } = req.user;
 
     const result = await query(
-      'SELECT id, username, email, full_name, theme, accent_color, created_at FROM users WHERE id = $1',
+      'SELECT id, username, email, full_name, avatar_url, theme, accent_color, created_at FROM users WHERE id = $1',
       [userId]
     );
 
@@ -123,7 +125,7 @@ export async function getCurrentUser(req, res) {
 export async function updateUser(req, res) {
   try {
     const { userId } = req.user;
-    const { fullName, email, theme, accentColor } = req.body;
+    const { fullName, email, theme, accentColor, avatarUrl } = req.body;
 
     if (email) {
       const existingUser = await query(
@@ -142,10 +144,11 @@ export async function updateUser(req, res) {
            email = COALESCE($3, email),
            theme = COALESCE($4, theme),
            accent_color = COALESCE($5, accent_color),
+           avatar_url = COALESCE($6, avatar_url),
            updated_at = CURRENT_TIMESTAMP
        WHERE id = $1
-       RETURNING id, username, email, full_name, theme, accent_color, updated_at`,
-      [userId, fullName, email, theme, accentColor]
+       RETURNING id, username, email, full_name, avatar_url, theme, accent_color, updated_at`,
+      [userId, fullName, email, theme, accentColor, avatarUrl]
     );
 
     if (result.rows.length === 0) {

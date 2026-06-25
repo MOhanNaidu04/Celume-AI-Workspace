@@ -16,6 +16,7 @@ export default function ProfileDropdown() {
     console.error('[ProfileDropdown] Failed to parse user from localStorage:', e);
   }
   const userInitial = user.username ? user.username.charAt(0).toUpperCase() : 'U';
+  const userAvatar = user.avatarUrl || user.avatar_url || user.avatar;
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -55,7 +56,11 @@ export default function ProfileDropdown() {
         aria-label="Profile menu"
         title={user.username || 'User'}
       >
-        {userInitial}
+        {userAvatar ? (
+          <img src={userAvatar} alt="" className="h-full w-full rounded-full object-cover" />
+        ) : (
+          userInitial
+        )}
       </button>
 
       {/* Dropdown Menu */}
@@ -64,10 +69,14 @@ export default function ProfileDropdown() {
           {/* User Info Section */}
           <div className="px-4 py-4 border-b border-slate-200 dark:border-slate-800">
             <div className="flex items-center gap-3">
-              <div 
-              className="flex h-12 w-12 items-center justify-center rounded-full bg-accent-gradient text-lg font-semibold text-white"
-            >
-                {userInitial}
+              <div
+                className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-accent-gradient text-lg font-semibold text-white"
+              >
+                {userAvatar ? (
+                  <img src={userAvatar} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  userInitial
+                )}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">
