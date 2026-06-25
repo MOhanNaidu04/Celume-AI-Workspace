@@ -77,6 +77,7 @@ function normalizeUserRow(user) {
     username: user.username,
     email: user.email,
     fullName: user.full_name,
+    avatarUrl: user.avatar_url,
     theme: user.theme,
     accentColor: user.accent_color,
     createdAt: user.created_at,
@@ -210,7 +211,7 @@ export default async function handler(req, res) {
       }
 
       const result = await query(
-        'SELECT id, username, email, full_name, theme, accent_color, created_at, updated_at FROM users WHERE id = $1',
+        'SELECT id, username, email, full_name, avatar_url, theme, accent_color, created_at, updated_at FROM users WHERE id = $1',
         [decoded.userId]
       );
 
@@ -231,7 +232,7 @@ export default async function handler(req, res) {
       }
 
       const body = await readBody(req);
-      const { fullName, email, theme, accentColor } = body;
+      const { fullName, email, theme, accentColor, avatarUrl } = body;
 
       if (email) {
         const existingUser = await query(
@@ -251,10 +252,11 @@ export default async function handler(req, res) {
              email = COALESCE($3, email),
              theme = COALESCE($4, theme),
              accent_color = COALESCE($5, accent_color),
+             avatar_url = COALESCE($6, avatar_url),
              updated_at = CURRENT_TIMESTAMP
          WHERE id = $1
-         RETURNING id, username, email, full_name, theme, accent_color, updated_at`,
-        [decoded.userId, fullName, email, theme, accentColor]
+         RETURNING id, username, email, full_name, avatar_url, theme, accent_color, updated_at`,
+        [decoded.userId, fullName, email, theme, accentColor, avatarUrl]
       );
 
       if (result.rows.length === 0) {
