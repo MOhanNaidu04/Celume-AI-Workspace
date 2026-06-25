@@ -13,7 +13,7 @@ const replies = {
 function setCorsHeaders(res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
   res.setHeader('Cache-Control', 'no-store');
 }
 
@@ -266,6 +266,27 @@ export default async function handler(req, res) {
         message: 'User updated successfully',
         user: normalizeUserRow(result.rows[0]),
       });
+      return;
+    }
+
+    if (pathname === '/auth/profile' && req.method === 'DELETE') {
+      const decoded = requireUser(req);
+      if (!decoded) {
+        sendJson(res, 401, { error: 'No authorization header' });
+        return;
+      }
+
+      const result = await query(
+        'DELETE FROM users WHERE id = $1 RETURNING id',
+        [decoded.userId]
+      );
+
+      if (result.rows.length === 0) {
+        sendJson(res, 404, { error: 'User not found' });
+        return;
+      }
+
+      sendJson(res, 200, { message: 'Account deleted successfully' });
       return;
     }
 

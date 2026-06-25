@@ -43,6 +43,7 @@ export default function ProfilePage() {
     normalizeUser(JSON.parse(localStorage.getItem('user') || '{}'))
   );
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [fieldErrors, setFieldErrors] = useState({ name: '', email: '' });
 
@@ -230,17 +231,46 @@ export default function ProfilePage() {
     setTimeout(() => navigate('/login', { replace: true }), 500);
   };
 
-  const handleRemoveProfile = () => {
-    const confirmed = window.confirm('Remove this profile from this device? You will be logged out and sent to create an account again.');
+  const handleDeleteAccount = async () => {
+    const confirmed = window.confirm('Delete this account from the database? This will remove your profile and saved data so you can register again.');
 
     if (!confirmed) return;
 
-    console.warn('[ProfilePage] Removing local profile and session data.');
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    window.dispatchEvent(new Event('storage'));
-    notify('Profile removed', 'Local profile data was removed from this device.');
-    setTimeout(() => navigate('/register', { replace: true }), 500);
+    const token = localStorage.getItem('token');
+    if (!token) {
+      console.warn('[ProfilePage] No auth token — cannot delete account. Redirecting to login.');
+      notify('Not signed in', 'Please log in again before deleting your account.', 'error');
+      navigate('/login', { replace: true });
+      return;
+    }
+
+    setDeleting(true);
+
+    try {
+      const response = await fetch(apiUrl('/api/auth/profile'), {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const data = await response.json();
+      console.log('[ProfilePage] Delete API response status:', response.status, '| ok:', response.ok);
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to delete account. Please try again.');
+      }
+
+      console.warn('[ProfilePage] Account deleted. Clearing local session data.');
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.dispatchEvent(new Event('storage'));
+      notify('Account deleted', 'Your profile was deleted from the database. You can register again now.');
+      setTimeout(() => navigate('/register', { replace: true }), 500);
+    } catch (error) {
+      console.error('[ProfilePage] Error deleting account:', error.message);
+      notify('Account deletion failed', error.message, 'error');
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const initial = (profile.name || profile.email || 'U').charAt(0).toUpperCase();
@@ -389,16 +419,18 @@ export default function ProfilePage() {
           <div className="flex flex-col gap-3 pt-2 sm:flex-row">
             <Button
               onClick={handleLogout}
+              disabled={deleting}
               className="w-full bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 sm:w-auto"
             >
               Logout
             </Button>
             <Button
               variant="danger"
-              onClick={handleRemoveProfile}
+              onClick={handleDeleteAccount}
+              disabled={deleting}
               className="w-full sm:w-auto"
             >
-              Remove profile
+              {deleting ? 'Deleting...' : 'Delete account'}
             </Button>
           </div>
         </div>

@@ -5,7 +5,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { query, connect, closePool } from './db/db.js';
 import { authMiddleware } from './db/auth.js';
-import { registerUser, loginUser, getCurrentUser, updateUser } from './db/authRoutes.js';
+import { registerUser, loginUser, getCurrentUser, updateUser, deleteUser } from './db/authRoutes.js';
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -48,6 +48,9 @@ app.get('/api/auth/me', authMiddleware, getCurrentUser);
 
 // Update user profile (protected)
 app.put('/api/auth/profile', authMiddleware, updateUser);
+
+// Delete user account (protected)
+app.delete('/api/auth/profile', authMiddleware, deleteUser);
 
 // ── Health Check Endpoints ─────────────────────────────────────────────────
 
