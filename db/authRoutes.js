@@ -11,14 +11,14 @@ export async function registerUser(req, res) {
       return res.status(400).json({ error: 'Username, email, and password are required' });
     }
 
-    // Check if user already exists
+    // Email is the registration identity; duplicate usernames are allowed.
     const existingUser = await query(
-      'SELECT id FROM users WHERE email = $1 OR username = $2',
-      [email, username]
+      'SELECT id FROM users WHERE email = $1',
+      [email]
     );
 
     if (existingUser.rows.length > 0) {
-      return res.status(409).json({ error: 'User already exists with this email or username' });
+      return res.status(409).json({ error: 'User already exists with this email' });
     }
 
     // Hash password

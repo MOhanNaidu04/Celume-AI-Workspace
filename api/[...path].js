@@ -126,12 +126,12 @@ export default async function handler(req, res) {
       }
 
       const existingUser = await query(
-        'SELECT id FROM users WHERE email = $1 OR username = $2',
-        [email, username]
+        'SELECT id FROM users WHERE email = $1',
+        [email]
       );
 
       if (existingUser.rows.length > 0) {
-        sendJson(res, 409, { error: 'User already exists with this email or username' });
+        sendJson(res, 409, { error: 'User already exists with this email' });
         return;
       }
 

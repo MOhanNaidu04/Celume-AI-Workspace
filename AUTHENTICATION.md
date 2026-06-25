@@ -285,7 +285,7 @@ curl -X GET http://localhost:4000/api/auth/me \
 ```sql
 CREATE TABLE users (
   id SERIAL PRIMARY KEY,
-  username VARCHAR(255) UNIQUE NOT NULL,
+  username VARCHAR(255) NOT NULL,
   email VARCHAR(255) UNIQUE NOT NULL,
   password_hash VARCHAR(255) NOT NULL,
   full_name VARCHAR(255),
@@ -306,7 +306,7 @@ CREATE TABLE users (
 - Clear localStorage and refresh the page
 
 ### "User already exists" Error
-- Email or username is already registered
+- Email is already registered
 - Try using a different email
 - Use login instead if you have an existing account
 
