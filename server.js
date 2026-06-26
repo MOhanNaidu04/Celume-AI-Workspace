@@ -97,7 +97,7 @@ app.get('/api/db/status', async (_req, res) => {
 
 app.post('/api/chat', authMiddleware, async (req, res) => {
   try {
-    const { prompt, category } = req.body;
+    const { prompt, category, chatId } = req.body;
     const userId = req.user?.userId;
 
     // Validate request body
@@ -147,28 +147,53 @@ app.post('/api/chat', authMiddleware, async (req, res) => {
       return res.status(502).json({ error: 'The language model returned an empty response.' });
     }
 
-    const response = {
+    let resolvedChatId = chatId;
+
+    if (resolvedChatId) {
+      const ownershipCheck = await query(
+        'SELECT id FROM chats WHERE id = $1 AND user_id = $2',
+        [resolvedChatId, userId]
+      );
+
+      if (ownershipCheck.rows.length === 0) {
+        return res.status(404).json({ error: 'Chat not found.' });
+      }
+    } else {
+      const chatQuery = `
+        INSERT INTO chats (user_id, title, category_id, last_message, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        RETURNING id, title, created_at;
+      `;
+      const chatResult = await query(chatQuery, [
+        userId,
+        prompt.trim().substring(0, 100),
+        category,
+        answer,
+      ]);
+      resolvedChatId = chatResult.rows[0].id;
+      console.log('[Server] New chat created — chatId: %s', resolvedChatId);
+    }
+
+    await query(
+      `INSERT INTO messages (chat_id, role, text)
+       VALUES ($1, $2, $3), ($1, $4, $5)`,
+      [resolvedChatId, 'user', prompt.trim(), 'assistant', answer]
+    );
+
+    await query(
+      `UPDATE chats
+       SET last_message = $2,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = $1`,
+      [resolvedChatId, answer]
+    );
+
+    res.json({
       answer,
       category,
+      chatId: resolvedChatId,
       createdAt: new Date().toISOString(),
-    };
-
-    // Save to database
-    const chatQuery = `
-      INSERT INTO chats (user_id, title, category_id, last_message, created_at, updated_at)
-      VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-      RETURNING id, title, created_at;
-    `;
-    const chatResult = await query(chatQuery, [
-      userId,
-      prompt.trim().substring(0, 100),
-      category,
-      response.answer,
-    ]);
-    response.chatId = chatResult.rows[0].id;
-
-    console.log('[Server] Chat saved to DB — chatId: %s', response.chatId);
-    res.json(response);
+    });
   } catch (error) {
     console.error('[Server] POST /api/chat error:', error.message);
     res.status(500).json({ error: 'An internal server error occurred. Please try again.' });
@@ -218,13 +243,22 @@ app.get('/api/chats/:chatId/messages', authMiddleware, async (req, res) => {
     const { chatId } = req.params;
     const userId = req.user?.userId;
 
-    if (!chatId || isNaN(Number(chatId))) {
-      console.warn('[Server] GET /api/chats/:chatId/messages — invalid chatId "%s".', chatId);
-      return res.status(400).json({ error: 'Invalid chat ID. Must be a numeric value.' });
+    if (!chatId) {
+      console.warn('[Server] GET /api/chats/:chatId/messages — missing chatId.');
+      return res.status(400).json({ error: 'Invalid chat ID.' });
+    }
+
+    const ownershipCheck = await query(
+      'SELECT id FROM chats WHERE id = $1 AND user_id = $2',
+      [chatId, userId]
+    );
+
+    if (ownershipCheck.rows.length === 0) {
+      return res.status(404).json({ error: 'Chat not found.' });
     }
 
     const result = await query(
-      'SELECT * FROM messages WHERE chat_id = $1 ORDER BY created_at ASC',
+      'SELECT id, chat_id, role, text, created_at FROM messages WHERE chat_id = $1 ORDER BY created_at ASC',
       [chatId]
     );
     console.log('[Server] GET /api/chats/%s/messages — userId: %s, returning %d messages',
@@ -233,6 +267,24 @@ app.get('/api/chats/:chatId/messages', authMiddleware, async (req, res) => {
   } catch (error) {
     console.error('[Server] GET /api/chats/:chatId/messages error:', error.message);
     res.status(500).json({ error: 'Failed to fetch messages. Please try again.' });
+  }
+});
+
+app.get('/api/chats', authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user?.userId;
+    const result = await query(
+      `SELECT id, title, category_id AS category, last_message, created_at, updated_at
+       FROM chats
+       WHERE user_id = $1
+       ORDER BY updated_at DESC`,
+      [userId]
+    );
+
+    res.json({ chats: result.rows });
+  } catch (error) {
+    console.error('[Server] GET /api/chats error:', error.message);
+    res.status(500).json({ error: 'Failed to fetch chats. Please try again.' });
   }
 });
 

@@ -1,4 +1,4 @@
-import { createContext, useContext, useCallback, useMemo, useState } from 'react';
+import { createContext, useContext, useCallback, useEffect, useMemo, useState } from 'react';
 import { initialChats, createEmptyChat } from '../data/chats';
 import { promptTemplates } from '../data/prompts';
 import { categories, getCategoryLabel } from '../data/categories';
@@ -24,6 +24,7 @@ export function AppProvider({ children }) {
     });
     return map;
   });
+  const [hydratedFromServer, setHydratedFromServer] = useState(false);
 
   const selectedChat = useMemo(
     () => chats.find((c) => c.id === selectedChatId) ?? chats[0],
@@ -78,6 +79,76 @@ export function AppProvider({ children }) {
     };
   }, [chats, promptUsage, messagesByChat]);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    async function hydrateFromServer() {
+      const token = localStorage.getItem('token');
+
+      if (!token) {
+        setHydratedFromServer(true);
+        return;
+      }
+
+      try {
+        const chatsResponse = await fetch(apiUrl('/api/chats'), {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        const chatsData = await chatsResponse.json().catch(() => ({}));
+        if (!chatsResponse.ok) {
+          throw new Error(chatsData.error || 'Failed to load chats.');
+        }
+
+        const serverChats = chatsData.chats || [];
+        const nextChats = [];
+        const nextMessagesByChat = {};
+
+        for (const chat of serverChats) {
+          const messagesResponse = await fetch(apiUrl(`/api/chats/${chat.id}/messages`), {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+
+          const messagesData = await messagesResponse.json().catch(() => ([]));
+          if (!messagesResponse.ok) {
+            throw new Error(messagesData.error || `Failed to load messages for chat ${chat.id}.`);
+          }
+
+          nextChats.push({
+            id: chat.id,
+            backendId: chat.id,
+            title: chat.title,
+            category: chat.category,
+            lastMessage: chat.last_message || '',
+            updatedAt: chat.updated_at || chat.created_at || 'Just now',
+            thread: [],
+          });
+          nextMessagesByChat[chat.id] = (messagesData || []).map((message) => ({
+            role: message.role,
+            text: message.text,
+            timestamp: message.created_at || formatTime(),
+          }));
+        }
+
+        if (!cancelled && nextChats.length > 0) {
+          setChats(nextChats);
+          setMessagesByChat(nextMessagesByChat);
+          setSelectedChatId(nextChats[0].id);
+        }
+      } catch (error) {
+        console.error('[AppContext] Failed to hydrate chats from server:', error.message);
+      } finally {
+        if (!cancelled) setHydratedFromServer(true);
+      }
+    }
+
+    hydrateFromServer();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [setChats, setMessagesByChat, setSelectedChatId]);
+
   const updateChatMeta = useCallback((chatId, updates) => {
     setChats((prev) =>
       prev.map((c) => (c.id === chatId ? { ...c, ...updates } : c))
@@ -99,6 +170,7 @@ export function AppProvider({ children }) {
         selectedChat?.title, selectedChatId, text.trim().slice(0, 60));
 
       const userMessage = { role: 'user', text: text.trim(), timestamp: formatTime() };
+      const backendChatId = selectedChat?.backendId || null;
 
       setMessagesByChat((prev) => ({
         ...prev,
@@ -133,6 +205,7 @@ export function AppProvider({ children }) {
           body: JSON.stringify({
             prompt: text.trim(),
             category: selectedChat.category,
+            chatId: backendChatId,
           }),
         });
 
@@ -143,6 +216,7 @@ export function AppProvider({ children }) {
         }
 
         const answer = data.answer;
+        const nextBackendChatId = data.chatId || backendChatId;
         const assistantMessage = { role: 'assistant', text: answer, timestamp: formatTime() };
 
         setMessagesByChat((prev) => ({
@@ -150,10 +224,13 @@ export function AppProvider({ children }) {
           [selectedChatId]: [...(prev[selectedChatId] ?? []), assistantMessage],
         }));
 
-        updateChatMeta(selectedChatId, {
-          lastMessage: answer.slice(0, 80) + (answer.length > 80 ? '...' : ''),
-          updatedAt: formatRelativeTime(),
-        });
+        setChats((prev) =>
+          prev.map((chat) =>
+            chat.id === selectedChatId
+              ? { ...chat, backendId: nextBackendChatId || chat.backendId, lastMessage: answer.slice(0, 80) + (answer.length > 80 ? '...' : ''), updatedAt: formatRelativeTime() }
+              : chat
+          )
+        );
 
         console.log('[AppContext] AI response received (%d chars).', answer.length);
         onNotify?.('Response ready', 'AI replied to your message.');
@@ -164,7 +241,7 @@ export function AppProvider({ children }) {
         setLoading(false);
       }
     },
-    [loading, selectedChatId, selectedChat, updateChatMeta, setMessagesByChat]
+    [loading, selectedChatId, selectedChat, setMessagesByChat, setChats]
   );
 
   const usePromptTemplate = useCallback(
@@ -267,6 +344,7 @@ export function AppProvider({ children }) {
     promptTemplates,
     draftPrompt,
     setDraftPrompt,
+    hydratedFromServer,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
