@@ -28,6 +28,23 @@ export default function HomePage() {
   const [promptText, setPromptText] = useState('');
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef(null);
+  const [displayName, setDisplayName] = useState('there');
+
+  useEffect(() => {
+    try {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const name =
+        user.fullName ||
+        user.full_name ||
+        user.name ||
+        user.username ||
+        user.email ||
+        'there';
+      setDisplayName(name);
+    } catch {
+      setDisplayName('there');
+    }
+  }, []);
 
   // Transfer any draft prompt from another page into the local input
   useEffect(() => {
@@ -163,7 +180,7 @@ export default function HomePage() {
           <div className="text-center">
             <p className="text-xs uppercase tracking-[0.4em] text-accent-500 dark:text-accent-400">Celume AI</p>
             <h1 className="mt-4 text-3xl font-semibold text-slate-950 dark:text-white sm:text-4xl">
-              Good afternoon, Mohan
+              Hello, {displayName}
             </h1>
           </div>
 

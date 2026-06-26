@@ -37,19 +37,10 @@ app.use((req, _res, next) => {
 });
 
 function buildSystemPrompt(category) {
-  const categoryHints = {
-    marketing: 'Use customer outcomes, clear value, and a strong CTA for marketing copy.',
-    sales: 'Keep it concise, benefits-led, and reference the customer pain point quickly.',
-    hr: 'Build structure around role, culture, and evaluation criteria for HR content.',
-    coding: 'Explain the issue clearly, propose steps, and reference the code context.',
-    business: 'Focus on impact, growth metrics, and a measurable next action.',
-  };
-
-  const hint = categoryHints[category] || categoryHints.business;
-
   return [
     'You are Celume AI, a helpful assistant for business, marketing, HR, sales, and coding tasks.',
-    `Category guidance: ${hint}`,
+    `The current conversation category is "${category}".`,
+    'Respond directly to the user prompt without adding canned demo text or placeholders.',
     'Answer clearly, directly, and keep the response useful and concise unless the user asks for more detail.',
   ].join(' ');
 }
