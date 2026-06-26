@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useApp } from '../../context/AppContext';
 import SearchInput from '../common/SearchInput';
+import Button from '../common/Button';
 
 const slowSlide = {
   type: 'spring',
@@ -17,6 +18,7 @@ export default function Sidebar({ mobileOpen, onClose }) {
     chats,
     selectedChatId,
     setSelectedChatId,
+    createNewChat,
     deleteChat,
     searchTerm,
     setSearchTerm,
@@ -39,10 +41,16 @@ export default function Sidebar({ mobileOpen, onClose }) {
     onClose?.();
   };
 
+  const handleNewChat = () => {
+    createNewChat('business');
+    navigate('/chat');
+    onClose?.();
+  };
+
   const sidebarContent = (
     <>
       <div>
-        <p className="text-xs uppercase tracking-[0.4em] text-slate-400 dark:text-slate-300">Celume AI</p>
+        <p className="text-xs uppercase tracking-[0.4em] text-slate-400 dark:text-slate-300">Mohan-ai-workspace</p>
         <h2 className="mt-2 text-2xl font-semibold text-slate-950 dark:text-white">Chat history</h2>
       </div>
 
@@ -55,6 +63,10 @@ export default function Sidebar({ mobileOpen, onClose }) {
           <p className="text-xs uppercase tracking-[0.4em] text-slate-400 dark:text-slate-300">Recents</p>
           <span className="text-xs text-slate-500 dark:text-slate-300">{filteredChats.length}</span>
         </div>
+
+        <Button onClick={handleNewChat} className="mb-3 w-full !rounded-2xl">
+          + New chat
+        </Button>
 
         <div className="space-y-3 overflow-y-auto pr-1">
           <AnimatePresence initial={false}>

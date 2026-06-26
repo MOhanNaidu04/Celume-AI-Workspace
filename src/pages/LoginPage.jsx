@@ -116,7 +116,7 @@ export default function LoginPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
             </div>
-            <h2 className="text-4xl font-bold text-white mb-4">Celume AI</h2>
+            <h2 className="text-4xl font-bold text-white mb-4">Mohan-ai-workspace</h2>
             <p className="text-xl text-slate-300 mb-8">Intelligent solutions made simple</p>
           </div>
 
@@ -142,7 +142,7 @@ export default function LoginPage() {
         <div className="w-full max-w-md">
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-slate-900 mb-2">Sign In</h1>
-            <p className="text-slate-600">Welcome back to Celume AI</p>
+            <p className="text-slate-600">Welcome back to Mohan-ai-workspace</p>
           </div>
 
           {error && (
@@ -168,8 +168,8 @@ export default function LoginPage() {
                 onBlur={() => handleFieldBlur('email')}
                 placeholder="you@example.com"
                 autoComplete="email"
-                className={`w-full px-4 py-3 bg-slate-50 border rounded-2xl text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition ${
-                  fieldErrors.email ? 'border-red-400 bg-red-50' : 'border-slate-300'
+                className={`w-full border-0 border-b px-0 py-3 bg-transparent text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-0 focus:border-accent-500 transition ${
+                  fieldErrors.email ? 'border-red-500' : 'border-slate-300 dark:border-slate-700'
                 }`}
               />
               {fieldErrors.email && (
@@ -196,8 +196,8 @@ export default function LoginPage() {
                   onBlur={() => handleFieldBlur('password')}
                   placeholder="••••••••"
                   autoComplete="current-password"
-                  className={`w-full px-4 py-3 pr-12 bg-slate-50 border rounded-2xl text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition ${
-                    fieldErrors.password ? 'border-red-400 bg-red-50' : 'border-slate-300'
+                  className={`w-full border-0 border-b px-0 py-3 pr-12 bg-transparent text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-0 focus:border-accent-500 transition ${
+                    fieldErrors.password ? 'border-red-500' : 'border-slate-300 dark:border-slate-700'
                   }`}
                 />
                 <button

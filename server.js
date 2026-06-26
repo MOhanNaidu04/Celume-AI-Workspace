@@ -38,7 +38,7 @@ app.use((req, _res, next) => {
 
 function buildSystemPrompt(category) {
   return [
-    'You are Celume AI, a helpful assistant for business, marketing, HR, sales, and coding tasks.',
+    'You are Mohan-ai-workspace, a helpful assistant for business, marketing, HR, sales, and coding tasks.',
     `The current conversation category is "${category}".`,
     'Respond directly to the user prompt without adding canned demo text or placeholders.',
     'Answer clearly, directly, and keep the response useful and concise unless the user asks for more detail.',

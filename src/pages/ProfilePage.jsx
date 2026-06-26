@@ -360,10 +360,10 @@ export default function ProfilePage() {
     ) : null;
 
   const inputClass = (field) =>
-    `mt-1 w-full rounded-2xl border px-4 py-3 text-sm disabled:opacity-60 dark:bg-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-accent-500 transition ${
+    `mt-1 w-full border-0 border-b border-slate-300 bg-transparent px-0 py-3 text-sm shadow-none disabled:opacity-60 dark:border-slate-700 dark:text-slate-100 focus:border-accent-500 focus:outline-none focus:ring-0 transition ${
       fieldErrors[field]
-        ? 'border-red-400 bg-red-50 dark:border-red-600'
-        : 'border-slate-200 bg-slate-50 dark:border-slate-800'
+        ? 'border-red-500'
+        : ''
     }`;
 
   return (
@@ -427,13 +427,13 @@ export default function ProfilePage() {
           {/* Role */}
           <label className="block">
             <span className="text-xs font-medium text-slate-500">Role</span>
-            <input
-              value={profile.role}
-              onChange={(e) => setProfile({ ...profile, role: e.target.value })}
-              disabled={loadingProfile || saving}
-              placeholder="Product Manager"
-              className="mt-1 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm disabled:opacity-60 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-accent-500 transition"
-            />
+              <input
+                value={profile.role}
+                onChange={(e) => setProfile({ ...profile, role: e.target.value })}
+                disabled={loadingProfile || saving}
+                placeholder="Product Manager"
+                className="mt-1 w-full border-0 border-b border-slate-300 bg-transparent px-0 py-3 text-sm shadow-none disabled:opacity-60 dark:border-slate-700 dark:text-slate-100 focus:border-accent-500 focus:outline-none focus:ring-0 transition"
+              />
           </label>
 
           {/* Email */}

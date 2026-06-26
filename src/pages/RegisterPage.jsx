@@ -157,8 +157,8 @@ export default function RegisterPage() {
     ) : null;
 
   const inputClass = (field) =>
-    `w-full px-4 py-3 bg-slate-50 border rounded-2xl text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition ${
-      fieldErrors[field] ? 'border-red-400 bg-red-50' : 'border-slate-300'
+    `w-full border-0 border-b px-0 py-3 bg-transparent text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-0 focus:border-accent-500 transition ${
+      fieldErrors[field] ? 'border-red-500' : 'border-slate-300 dark:border-slate-700'
     }`;
 
   return (
@@ -177,7 +177,7 @@ export default function RegisterPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
             </div>
-            <h2 className="text-4xl font-bold text-white mb-4">Celume AI</h2>
+            <h2 className="text-4xl font-bold text-white mb-4">Mohan-ai-workspace</h2>
             <p className="text-xl text-slate-300 mb-8">Intelligent solutions made simple</p>
           </div>
 
@@ -203,7 +203,7 @@ export default function RegisterPage() {
         <div className="w-full max-w-md">
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-slate-900 mb-2">Create Account</h1>
-            <p className="text-slate-600">Join Celume AI and start creating</p>
+            <p className="text-slate-600">Join Mohan-ai-workspace and start creating</p>
           </div>
 
           {/* Top-level error banner */}

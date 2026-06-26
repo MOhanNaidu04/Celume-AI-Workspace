@@ -178,7 +178,7 @@ export default function HomePage() {
           className="rounded-2xl border border-white/70 bg-white/80 p-4 shadow-lg shadow-slate-200/5 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/80 dark:shadow-slate-950/5 sm:rounded-3xl sm:p-10"
         >
           <div className="text-center">
-            <p className="text-xs uppercase tracking-[0.4em] text-accent-500 dark:text-accent-400">Celume AI</p>
+            <p className="text-xs uppercase tracking-[0.4em] text-accent-500 dark:text-accent-400">Mohan-ai-workspace</p>
             <h1 className="mt-4 text-3xl font-semibold text-slate-950 dark:text-white sm:text-4xl">
               Hello, {displayName}
             </h1>

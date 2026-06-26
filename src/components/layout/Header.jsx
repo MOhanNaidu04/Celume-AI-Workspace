@@ -44,7 +44,7 @@ export default function Header() {
       <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between xl:gap-6">
         <div className="min-w-0">
           <p className="text-xs uppercase tracking-[0.32em] text-slate-500 dark:text-slate-400">Workspace</p>
-          <h1 className="mt-2 truncate text-2xl font-semibold text-slate-900 dark:text-slate-100 sm:mt-3 sm:text-3xl">Celume AI</h1>
+          <h1 className="mt-2 truncate text-2xl font-semibold text-slate-900 dark:text-slate-100 sm:mt-3 sm:text-3xl">Mohan-ai-workspace</h1>
         </div>
 
         <div className="flex min-w-0 flex-col gap-3 md:flex-row md:items-center">
@@ -82,8 +82,15 @@ export default function Header() {
               className="!px-3 flex items-center justify-center gap-2"
               aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
             >
-              <span className="text-sm font-medium">{isDark ? 'Light' : 'Dark'}</span>
-              <span className="hidden sm:inline text-sm font-medium">mode</span>
+              {isDark ? (
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
+                </svg>
+              ) : (
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m8.66-9H21M3 12h1m13.66-6.66.7-.7M5.64 18.36l-.7.7m0-13.72.7.7m12.02 12.02.7.7M12 8a4 4 0 100 8 4 4 0 000-8z" />
+                </svg>
+              )}
             </Button>
             <div className="hidden h-8 w-px bg-slate-200 dark:bg-slate-700 md:block" />
             <ProfileDropdown />

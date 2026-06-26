@@ -9,8 +9,8 @@ import { formatTime, formatRelativeTime } from '../utils/formatTime';
 const AppContext = createContext(null);
 
 export function AppProvider({ children }) {
-  const [chats, setChats] = useLocalStorage('celume-chats', initialChats);
-  const [selectedChatId, setSelectedChatId] = useLocalStorage('celume-selected-chat', initialChats[0].id);
+  const [chats, setChats] = useLocalStorage('celume-chats', []);
+  const [selectedChatId, setSelectedChatId] = useLocalStorage('celume-selected-chat', '');
   const [favorites, setFavorites] = useLocalStorage('celume-favorites', ['launch-copy']);
   const [promptUsage, setPromptUsage] = useLocalStorage('celume-prompt-usage', {});
   const [categoryFilter, setCategoryFilter] = useState('');
@@ -18,20 +18,16 @@ export function AppProvider({ children }) {
   const [loading, setLoading] = useState(false);
   const [draftPrompt, setDraftPrompt] = useState('');
   const [messagesByChat, setMessagesByChat] = useLocalStorage('celume-messages', () => {
-    const map = {};
-    initialChats.forEach((chat) => {
-      map[chat.id] = chat.thread.map((m) => ({ ...m, timestamp: formatTime() }));
-    });
-    return map;
+    return {};
   });
   const [hydratedFromServer, setHydratedFromServer] = useState(false);
 
   const selectedChat = useMemo(
-    () => chats.find((c) => c.id === selectedChatId) ?? chats[0],
+    () => chats.find((c) => c.id === selectedChatId) ?? chats[0] ?? null,
     [chats, selectedChatId]
   );
 
-  const messages = messagesByChat[selectedChatId] ?? [];
+  const messages = selectedChatId ? (messagesByChat[selectedChatId] ?? []) : [];
 
   const visibleChats = useMemo(() => {
     return chats.filter((chat) => {
@@ -130,10 +126,10 @@ export function AppProvider({ children }) {
           }));
         }
 
-        if (!cancelled && nextChats.length > 0) {
+        if (!cancelled) {
           setChats(nextChats);
           setMessagesByChat(nextMessagesByChat);
-          setSelectedChatId(nextChats[0].id);
+          setSelectedChatId(nextChats[0]?.id || '');
         }
       } catch (error) {
         console.error('[AppContext] Failed to hydrate chats from server:', error.message);
@@ -166,30 +162,42 @@ export function AppProvider({ children }) {
         return;
       }
 
+      let activeChat = selectedChat;
+      let activeChatId = selectedChatId;
+
+      if (!activeChat) {
+        const freshChat = createEmptyChat('business');
+        activeChat = freshChat;
+        activeChatId = freshChat.id;
+        setChats([freshChat]);
+        setMessagesByChat({ [freshChat.id]: [] });
+        setSelectedChatId(freshChat.id);
+      }
+
       console.log('[AppContext] Sending message to chat "%s" (id: %s): "%s"',
-        selectedChat?.title, selectedChatId, text.trim().slice(0, 60));
+        activeChat?.title, activeChatId, text.trim().slice(0, 60));
 
       const userMessage = { role: 'user', text: text.trim(), timestamp: formatTime() };
-      const backendChatId = selectedChat?.backendId || null;
+      const backendChatId = activeChat?.backendId || null;
 
       setMessagesByChat((prev) => ({
         ...prev,
-        [selectedChatId]: [...(prev[selectedChatId] ?? []), userMessage],
+        [activeChatId]: [...(prev[activeChatId] ?? []), userMessage],
       }));
 
-      updateChatMeta(selectedChatId, {
+      updateChatMeta(activeChatId, {
         lastMessage: text.trim().slice(0, 80),
         updatedAt: formatRelativeTime(),
         title:
-          selectedChat.title === 'New conversation'
+          activeChat.title === 'New conversation'
             ? text.trim().slice(0, 40) + (text.length > 40 ? '...' : '')
-            : selectedChat.title,
+            : activeChat.title,
       });
 
       setLoading(true);
 
       try {
-        console.log('[AppContext] Sending prompt to backend LLM for category "%s"...', selectedChat?.category);
+        console.log('[AppContext] Sending prompt to backend LLM for category "%s"...', activeChat?.category);
 
         const token = localStorage.getItem('token');
         if (!token) {
@@ -204,7 +212,7 @@ export function AppProvider({ children }) {
           },
           body: JSON.stringify({
             prompt: text.trim(),
-            category: selectedChat.category,
+            category: activeChat.category,
             chatId: backendChatId,
           }),
         });
@@ -221,12 +229,12 @@ export function AppProvider({ children }) {
 
         setMessagesByChat((prev) => ({
           ...prev,
-          [selectedChatId]: [...(prev[selectedChatId] ?? []), assistantMessage],
+          [activeChatId]: [...(prev[activeChatId] ?? []), assistantMessage],
         }));
 
         setChats((prev) =>
           prev.map((chat) =>
-            chat.id === selectedChatId
+            chat.id === activeChatId
               ? { ...chat, backendId: nextBackendChatId || chat.backendId, lastMessage: answer.slice(0, 80) + (answer.length > 80 ? '...' : ''), updatedAt: formatRelativeTime() }
               : chat
           )
@@ -241,7 +249,7 @@ export function AppProvider({ children }) {
         setLoading(false);
       }
     },
-    [loading, selectedChatId, selectedChat, setMessagesByChat, setChats]
+      [loading, selectedChatId, selectedChat, setMessagesByChat, setChats, setSelectedChatId]
   );
 
   const usePromptTemplate = useCallback(

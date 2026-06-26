@@ -24,7 +24,7 @@ export default function ChatInput({ value, onChange, onSend, loading, quickTempl
           placeholder="Type your prompt, or choose a template below..."
           rows={3}
           disabled={loading}
-          className="min-h-[96px] w-full resize-none rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 text-sm text-slate-950 backdrop-blur-md placeholder:text-slate-500 disabled:opacity-60 focus:outline-none dark:border-slate-800 dark:bg-white/[0.02] dark:text-slate-100 dark:placeholder:text-slate-400"
+          className="min-h-[96px] w-full resize-none border-0 border-b border-slate-300 bg-transparent px-0 py-3 text-sm text-slate-950 backdrop-blur-md placeholder:text-slate-500 disabled:opacity-60 focus:border-accent-500 focus:outline-none focus:ring-0 dark:border-slate-700 dark:text-slate-100 dark:placeholder:text-slate-400"
         />
         <Button
           onClick={() => onSend(value)}

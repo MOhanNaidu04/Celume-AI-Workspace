@@ -37,10 +37,10 @@ export default function ChatWindow({
         <div className="min-w-0">
           <p className="text-xs uppercase tracking-[0.24em] text-slate-400">Active thread</p>
           <h1 className="break-words text-xl font-semibold text-slate-950 dark:text-slate-100 sm:text-2xl">
-            {activeChat.title}
+            {activeChat?.title || 'New conversation'}
           </h1>
           <p className="mt-1 line-clamp-2 text-sm text-slate-600 dark:text-slate-400">
-            {activeChat.lastMessage}
+            {activeChat?.lastMessage || 'Start a conversation to see your latest prompt here.'}
           </p>
         </div>
         <div className="grid w-full grid-cols-2 gap-2 sm:w-auto sm:flex sm:flex-wrap sm:items-center sm:justify-end sm:gap-3">

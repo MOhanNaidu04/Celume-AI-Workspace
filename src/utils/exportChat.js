@@ -1,5 +1,5 @@
 export function exportChatAsText(chat, messages) {
-  const header = `Celume AI - Chat Export\nTitle: ${chat.title}\nCategory: ${chat.category}\nExported: ${new Date().toLocaleString()}\n${'='.repeat(50)}\n\n`;
+  const header = `Mohan-ai-workspace - Chat Export\nTitle: ${chat.title}\nCategory: ${chat.category}\nExported: ${new Date().toLocaleString()}\n${'='.repeat(50)}\n\n`;
 
   const body = messages
     .map((message) => `[${message.timestamp ?? '-'}] ${message.role === 'assistant' ? 'AI' : 'You'}:\n${message.text}\n`)
