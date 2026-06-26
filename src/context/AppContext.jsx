@@ -398,16 +398,18 @@ export function AppProvider({ children }) {
 
       try {
         const token = localStorage.getItem('token');
-        if (token) {
-          const response = await fetch(apiUrl(`/api/chats/${chatId}`), {
-            method: 'DELETE',
-            headers: { Authorization: `Bearer ${token}` },
-          });
+        if (!token) {
+          throw new Error('You are not signed in. Please log in again.');
+        }
 
-          const data = await response.json().catch(() => ({}));
-          if (!response.ok) {
-            throw new Error(data.error || 'Failed to delete chat.');
-          }
+        const response = await fetch(apiUrl(`/api/chats/${chatId}`), {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to delete chat.');
         }
 
         if (remainingChats.length === 0) {

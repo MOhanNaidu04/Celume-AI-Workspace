@@ -14,6 +14,8 @@ export default function ChatWindow({
   onSelectTemplate,
   quickTemplates,
   onCopyPrompt,
+  onCopyMessage,
+  onRewriteMessage,
 }) {
   const scrollRef = useRef(null);
 
@@ -62,7 +64,13 @@ export default function ChatWindow({
 
         <AnimatePresence initial={false}>
           {messages.map((message, index) => (
-            <MessageBubble key={`${message.role}-${index}-${message.timestamp}`} message={message} index={index} />
+            <MessageBubble
+              key={`${message.role}-${index}-${message.timestamp}`}
+              message={message}
+              index={index}
+              onCopy={onCopyMessage}
+              onRewrite={onRewriteMessage}
+            />
           ))}
         </AnimatePresence>
 

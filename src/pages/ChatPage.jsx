@@ -134,6 +134,39 @@ export default function ChatPage() {
     openShareUrl(buildShareTargets(shareUrl, shareText).linkedin, 'LinkedIn');
   };
 
+  const handleCopyPrompt = async (prompt) => {
+    const cleanPrompt = prompt?.trim();
+    if (!cleanPrompt) {
+      notify('Nothing to copy', 'Type a prompt before copying.', 'error');
+      return;
+    }
+
+    await navigator.clipboard.writeText(cleanPrompt);
+    notify('Prompt copied', 'Your draft prompt was copied to the clipboard.');
+  };
+
+  const handleCopyMessage = async (text) => {
+    const cleanText = text?.trim();
+    if (!cleanText) {
+      notify('Nothing to copy', 'This message is empty.', 'error');
+      return;
+    }
+
+    await navigator.clipboard.writeText(cleanText);
+    notify('Message copied', 'The prompt was copied to your clipboard.');
+  };
+
+  const handleRewriteMessage = async (text) => {
+    const cleanText = text?.trim();
+    if (!cleanText) {
+      notify('Nothing to rewrite', 'This message is empty.', 'error');
+      return;
+    }
+
+    setDraftPrompt(cleanText);
+    notify('Ready to rewrite', 'The prompt was loaded back into the composer.');
+  };
+
   return (
     <ChatWindow
       activeChat={selectedChat}
@@ -152,6 +185,9 @@ export default function ChatPage() {
       onShareX={handleShareX}
       onShareWhatsApp={handleShareWhatsApp}
       onShareLinkedIn={handleShareLinkedIn}
+      onCopyPrompt={handleCopyPrompt}
+      onCopyMessage={handleCopyMessage}
+      onRewriteMessage={handleRewriteMessage}
     />
   );
 }
