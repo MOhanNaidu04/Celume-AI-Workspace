@@ -248,13 +248,51 @@ export default function ProfilePage() {
     reader.readAsDataURL(file);
   };
 
-  const handleRemoveAvatar = () => {
-    setProfile((current) => ({ ...current, avatar: '' }));
+  const handleRemoveAvatar = async () => {
+    const nextAvatar = '';
+    setProfile((current) => ({ ...current, avatar: nextAvatar }));
     writeStoredUser((current) => ({
       ...current,
-      avatarUrl: '',
+      avatarUrl: nextAvatar,
     }));
-    notify('Profile picture removed', 'Your profile picture was removed from the account.');
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+      notify('Profile picture removed', 'Your profile picture was removed from this device.');
+      return;
+    }
+
+    try {
+      const response = await fetch(apiUrl('/api/auth/profile'), {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          fullName: profile.name.trim(),
+          email: profile.email.trim(),
+          role: profile.role.trim(),
+          avatarUrl: nextAvatar,
+        }),
+      });
+
+      const data = await readJsonResponse(response);
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to remove profile picture. Please try again.');
+      }
+
+      const updatedUser = toStoredUser(data.user);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      window.dispatchEvent(new Event('storage'));
+      setProfile(normalizeUser(updatedUser));
+      notify('Profile picture removed', 'Your profile picture was removed from the account.');
+    } catch (error) {
+      const message = getRequestErrorMessage(error);
+      console.error('[ProfilePage] Error removing avatar:', message);
+      notify('Profile picture removal failed', message, 'error');
+    }
   };
 
   const handleLogout = () => {
