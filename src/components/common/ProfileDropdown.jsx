@@ -2,6 +2,22 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNotification } from '../../context/NotificationContext';
 
+function getUserDisplayName(user) {
+  return (
+    user.fullName ||
+    user.full_name ||
+    user.name ||
+    user.username ||
+    user.email ||
+    'User'
+  );
+}
+
+function getUserInitial(user) {
+  const displayName = getUserDisplayName(user).trim();
+  return displayName ? displayName.charAt(0).toUpperCase() : 'U';
+}
+
 export default function ProfileDropdown() {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -15,7 +31,8 @@ export default function ProfileDropdown() {
   } catch (e) {
     console.error('[ProfileDropdown] Failed to parse user from localStorage:', e);
   }
-  const userInitial = user.username ? user.username.charAt(0).toUpperCase() : 'U';
+  const userInitial = getUserInitial(user);
+  const userDisplayName = getUserDisplayName(user);
   const userAvatar = user.avatarUrl || user.avatar_url || user.avatar;
 
   // Close dropdown when clicking outside
@@ -54,7 +71,7 @@ export default function ProfileDropdown() {
         onClick={() => setIsOpen(!isOpen)}
         className="flex h-10 w-10 items-center justify-center rounded-full bg-accent-gradient font-semibold text-white transition-all duration-200 hover:scale-105 hover:shadow-lg"
         aria-label="Profile menu"
-        title={user.username || 'User'}
+        title={userDisplayName}
       >
         {userAvatar ? (
           <img src={userAvatar} alt="" className="h-full w-full rounded-full object-cover" />
@@ -80,7 +97,7 @@ export default function ProfileDropdown() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">
-                  {user.username || 'User'}
+                  {userDisplayName}
                 </p>
                 <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
                   {user.email || 'user@example.com'}
