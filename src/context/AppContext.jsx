@@ -382,6 +382,20 @@ export function AppProvider({ children }) {
 
       console.log('[AppContext] Deleting chat "%s" (id: %s). Chats remaining: %d', chatToDelete.title, chatId, chats.length - 1);
 
+      const remainingChats = chats.filter((chat) => chat.id !== chatId);
+      const previousSelectedChatId = selectedChatId;
+      const previousMessages = messagesByChat;
+
+      setChats(remainingChats);
+      setMessagesByChat((prev) => {
+        const { [chatId]: _deleted, ...rest } = prev;
+        return rest;
+      });
+
+      if (selectedChatId === chatId && remainingChats.length > 0) {
+        setSelectedChatId(remainingChats[0].id);
+      }
+
       try {
         const token = localStorage.getItem('token');
         if (token) {
@@ -395,29 +409,20 @@ export function AppProvider({ children }) {
             throw new Error(data.error || 'Failed to delete chat.');
           }
         }
+
+        if (remainingChats.length === 0) {
+          const freshChat = await createNewChat();
+          setSelectedChatId(freshChat.id);
+        }
       } catch (error) {
         console.error('[AppContext] deleteChat persistence failed:', error.message);
+        setChats((prev) => (prev.some((chat) => chat.id === chatId) ? prev : [chatToDelete, ...prev]));
+        setMessagesByChat(previousMessages);
+        setSelectedChatId(previousSelectedChatId);
         throw error;
       }
-
-      const remainingChats = chats.filter((chat) => chat.id !== chatId);
-      setChats(remainingChats);
-      setMessagesByChat((prev) => {
-        const { [chatId]: _deleted, ...rest } = prev;
-        return rest;
-      });
-
-      if (selectedChatId === chatId) {
-        if (remainingChats.length > 0) {
-          console.log('[AppContext] Deleted selected chat - switching to: "%s"', remainingChats[0].title);
-          setSelectedChatId(remainingChats[0].id);
-        } else {
-          console.log('[AppContext] No chats left after deletion - creating a fresh chat.');
-          await createNewChat();
-        }
-      }
     },
-    [chats, createNewChat, selectedChatId, setChats, setMessagesByChat, setSelectedChatId]
+    [chats, createNewChat, messagesByChat, selectedChatId, setChats, setMessagesByChat, setSelectedChatId]
   );
 
   const value = {

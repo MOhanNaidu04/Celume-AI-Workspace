@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useApp } from '../../context/AppContext';
@@ -16,6 +16,7 @@ const slowSlide = {
 export default function Sidebar({ mobileOpen, onClose }) {
   const navigate = useNavigate();
   const [openMenuId, setOpenMenuId] = useState('');
+  const sidebarRef = useRef(null);
   const {
     chats,
     selectedChatId,
@@ -75,6 +76,27 @@ export default function Sidebar({ mobileOpen, onClose }) {
       openShareTab(targets.x);
     }
   };
+
+  const handleMenuDelete = async (chat) => {
+    try {
+      await deleteChat(chat.id);
+    } catch (error) {
+      console.error('[Sidebar] deleteChat failed:', error.message);
+    } finally {
+      setOpenMenuId('');
+    }
+  };
+
+  useEffect(() => {
+    const handlePointerDown = (event) => {
+      if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
+        setOpenMenuId('');
+      }
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown);
+    return () => document.removeEventListener('pointerdown', handlePointerDown);
+  }, []);
 
   const sidebarContent = (
     <>
@@ -194,7 +216,7 @@ export default function Sidebar({ mobileOpen, onClose }) {
                                 </button>
                                 <button
                                   type="button"
-                                  onClick={() => deleteChat(chat.id)}
+                                  onClick={() => handleMenuDelete(chat)}
                                   className="mt-1 w-full rounded-xl px-3 py-2 text-left text-sm text-rose-600 transition hover:bg-rose-50 dark:text-rose-300 dark:hover:bg-rose-950/30"
                                 >
                                   Delete chat
@@ -217,7 +239,7 @@ export default function Sidebar({ mobileOpen, onClose }) {
 
   return (
     <>
-      <aside className="hidden w-72 shrink-0 flex-col overflow-visible rounded-3xl border border-white/70 bg-white/80 p-4 shadow-soft backdrop-blur-xl dark:border-slate-700 dark:bg-slate-950 lg:flex xl:w-80 xl:p-6">
+      <aside ref={sidebarRef} className="hidden w-72 shrink-0 flex-col overflow-visible rounded-3xl border border-white/70 bg-white/80 p-4 shadow-soft backdrop-blur-xl dark:border-slate-700 dark:bg-slate-950 lg:flex xl:w-80 xl:p-6">
         {sidebarContent}
       </aside>
 
