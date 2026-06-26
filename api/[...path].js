@@ -384,6 +384,31 @@ export default async function handler(req, res) {
       return;
     }
 
+    if (pathname.match(/^\/chats\/[^/]+$/) && req.method === 'DELETE') {
+      const decoded = requireUser(req);
+      if (!decoded) {
+        sendJson(res, 401, { error: 'No authorization header' });
+        return;
+      }
+
+      const chatId = pathname.split('/')[2];
+      const ownershipCheck = await query(
+        'SELECT id FROM chats WHERE id = $1 AND user_id = $2',
+        [chatId, decoded.userId]
+      );
+
+      if (ownershipCheck.rows.length === 0) {
+        sendJson(res, 404, { error: 'Chat not found.' });
+        return;
+      }
+
+      await query('DELETE FROM messages WHERE chat_id = $1', [chatId]);
+      await query('DELETE FROM chats WHERE id = $1 AND user_id = $2', [chatId, decoded.userId]);
+
+      sendJson(res, 200, { success: true, chatId });
+      return;
+    }
+
     if (pathname.match(/^\/chats\/[^/]+\/messages$/) && req.method === 'GET') {
       const decoded = requireUser(req);
       if (!decoded) {
