@@ -68,8 +68,7 @@ export default function ChatWindow({
                 Start a conversation
               </p>
               <p className="mt-2 max-w-sm text-sm text-slate-600 dark:text-slate-400">
-                Ask a question or pick a prompt template. AI responses are simulated with predefined
-                answers based on your keywords.
+                Ask a question or pick a prompt template. Responses come from the connected model.
               </p>
             </div>
           </motion.div>
