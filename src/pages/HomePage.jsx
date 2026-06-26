@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useApp } from '../context/AppContext';
 import { useNotification } from '../context/NotificationContext';
+import { useStoredUser } from '../hooks/useStoredUser';
 
 const suggestions = [
   {
@@ -29,22 +30,18 @@ export default function HomePage() {
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef(null);
   const [displayName, setDisplayName] = useState('there');
+  const user = useStoredUser();
 
   useEffect(() => {
-    try {
-      const user = JSON.parse(localStorage.getItem('user') || '{}');
-      const name =
-        user.fullName ||
-        user.full_name ||
-        user.name ||
-        user.username ||
-        user.email ||
-        'there';
-      setDisplayName(name);
-    } catch {
-      setDisplayName('there');
-    }
-  }, []);
+    const name =
+      user.fullName ||
+      user.full_name ||
+      user.name ||
+      user.username ||
+      user.email ||
+      'there';
+    setDisplayName(name);
+  }, [user]);
 
   // Transfer any draft prompt from another page into the local input
   useEffect(() => {

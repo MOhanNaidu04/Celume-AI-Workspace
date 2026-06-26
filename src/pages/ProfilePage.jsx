@@ -4,6 +4,7 @@ import Card from '../components/common/Card';
 import Button from '../components/common/Button';
 import { useApp } from '../context/AppContext';
 import { useNotification } from '../context/NotificationContext';
+import { useStoredUser } from '../hooks/useStoredUser';
 import { apiUrl } from '../utils/api';
 
 // ─── Validation Helpers ──────────────────────────────────────────────────────
@@ -77,15 +78,23 @@ export default function ProfilePage() {
   const { analytics, favorites } = useApp();
   const { notify } = useNotification();
   const navigate = useNavigate();
+  const storedUser = useStoredUser();
 
-  const [profile, setProfile] = useState(() =>
-    normalizeUser(JSON.parse(localStorage.getItem('user') || '{}'))
-  );
+  const [profile, setProfile] = useState(() => normalizeUser(storedUser));
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [fieldErrors, setFieldErrors] = useState({ name: '', email: '' });
   const loadErrorNotifiedRef = useRef(false);
+
+  useEffect(() => {
+    setProfile((current) => {
+      const nextProfile = normalizeUser(storedUser);
+      return current.name || current.email || current.avatar
+        ? { ...current, ...nextProfile, avatar: nextProfile.avatar || current.avatar }
+        : nextProfile;
+    });
+  }, [storedUser]);
 
   // ── Load profile from API ──────────────────────────────────────────────────
 

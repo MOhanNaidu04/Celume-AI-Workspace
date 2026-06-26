@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useTheme } from '../../hooks/useTheme';
@@ -23,16 +22,10 @@ export default function Header() {
   const { toggleTheme, isDark } = useTheme();
   const location = useLocation();
 
-  const activeItem = navItems.find((item) => location.pathname === item.to)?.to ?? '/chat';
-  const [selectedItem, setSelectedItem] = useState(activeItem);
-  const selectedIndex = Math.max(
-    0,
-    navItems.findIndex((item) => item.to === selectedItem)
+  const selectedIndex = navItems.findIndex(
+    (item) => location.pathname === item.to || (item.to === '/chat' && location.pathname === '/')
   );
-
-  useEffect(() => {
-    setSelectedItem(activeItem);
-  }, [activeItem]);
+  const hasSelectedItem = selectedIndex >= 0;
 
   return (
     <motion.header
@@ -49,21 +42,23 @@ export default function Header() {
 
         <div className="flex min-w-0 flex-col gap-3 md:flex-row md:items-center">
           <nav className="relative grid min-w-0 grid-cols-4 rounded-2xl bg-slate-100 p-1 dark:bg-slate-900 sm:rounded-full">
-            <div className="pointer-events-none absolute inset-1">
-              <motion.span
-                className="block h-full w-1/4 rounded-full bg-white shadow-sm dark:bg-slate-800"
-                animate={{ x: `${selectedIndex * 100}%` }}
-                transition={slowSlide}
-              />
-            </div>
+            {hasSelectedItem && (
+              <div className="pointer-events-none absolute inset-1">
+                <motion.span
+                  className="block h-full w-1/4 rounded-full bg-white shadow-sm dark:bg-slate-800"
+                  animate={{ x: `${selectedIndex * 100}%` }}
+                  transition={slowSlide}
+                />
+              </div>
+            )}
             {navItems.map((item) => {
-              const isSelected = selectedItem === item.to;
+              const isSelected =
+                location.pathname === item.to || (item.to === '/chat' && location.pathname === '/');
 
               return (
               <Link
                 key={item.to}
                 to={item.to}
-                onClick={() => setSelectedItem(item.to)}
                 className={`relative z-10 min-w-0 rounded-2xl px-2 py-2 text-center text-[11px] font-medium leading-tight transition duration-500 sm:rounded-full sm:px-4 sm:text-sm ${
                   isSelected
                     ? 'text-slate-900 dark:text-slate-100'

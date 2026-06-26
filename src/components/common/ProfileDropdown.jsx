@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNotification } from '../../context/NotificationContext';
+import { useStoredUser } from '../../hooks/useStoredUser';
 
 function getUserDisplayName(user) {
   return (
@@ -23,14 +24,7 @@ export default function ProfileDropdown() {
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
   const { notify } = useNotification();
-
-  // Safely parse user from localStorage
-  let user = {};
-  try {
-    user = JSON.parse(localStorage.getItem('user') || '{}');
-  } catch (e) {
-    console.error('[ProfileDropdown] Failed to parse user from localStorage:', e);
-  }
+  const user = useStoredUser();
   const userInitial = getUserInitial(user);
   const userDisplayName = getUserDisplayName(user);
   const userAvatar = user.avatarUrl || user.avatar_url || user.avatar;
