@@ -396,13 +396,22 @@ export function AppProvider({ children }) {
         setSelectedChatId(remainingChats[0].id);
       }
 
+      // Local-only optimistic chats never reached the backend, so there is
+      // nothing to delete server-side.
+      if (!chatToDelete.backendId) {
+        if (remainingChats.length === 0) {
+          setSelectedChatId('');
+        }
+        return;
+      }
+
       try {
         const token = localStorage.getItem('token');
         if (!token) {
           throw new Error('You are not signed in. Please log in again.');
         }
 
-        const response = await fetch(apiUrl(`/api/chats/${chatId}`), {
+        const response = await fetch(apiUrl(`/api/chats/${chatToDelete.backendId}`), {
           method: 'DELETE',
           headers: { Authorization: `Bearer ${token}` },
         });
