@@ -30,10 +30,10 @@ export default function MessageBubble({ message, index, onCopy, onRewrite }) {
       }`}
     >
       <div
-        className={`max-w-[96%] min-w-0 rounded-2xl p-3 shadow-soft sm:max-w-[85%] sm:rounded-3xl sm:p-5 ${
+        className={`max-w-[96%] min-w-0 rounded-2xl border p-3 sm:max-w-[85%] sm:rounded-3xl sm:p-5 ${
           isAssistant
-            ? 'bg-slate-100 dark:bg-slate-900'
-            : 'bg-accent-500'
+            ? 'border-slate-200 bg-slate-100 dark:border-slate-800 dark:bg-slate-900'
+            : 'border-accent-500 bg-accent-500'
         }`}
       >
         <div className="flex items-start justify-between gap-3">

@@ -6,7 +6,7 @@ export default function TypingIndicator() {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="max-w-[85%] self-start rounded-3xl bg-slate-100 p-5 shadow-soft dark:bg-slate-900"
+      className="max-w-[85%] self-start rounded-3xl border border-slate-200 bg-slate-100 p-5 dark:border-slate-800 dark:bg-slate-900"
     >
       <div className="flex items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
         <span className="font-semibold">AI Assistant</span>

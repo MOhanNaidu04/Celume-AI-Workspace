@@ -75,7 +75,7 @@ function getRequestErrorMessage(error) {
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function ProfilePage() {
-  const { analytics, favorites } = useApp();
+  const { analytics } = useApp();
   const { notify } = useNotification();
   const navigate = useNavigate();
   const storedUser = useStoredUser();
@@ -192,12 +192,11 @@ export default function ProfilePage() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          fullName: profile.name.trim(),
-          email: profile.email.trim(),
-          role: profile.role.trim(),
-          avatarUrl: profile.avatar,
-        }),
+      body: JSON.stringify({
+        fullName: profile.name.trim(),
+        email: profile.email.trim(),
+        avatarUrl: profile.avatar,
+      }),
       });
 
       const data = await readJsonResponse(response);
@@ -281,7 +280,6 @@ export default function ProfilePage() {
         body: JSON.stringify({
           fullName: profile.name.trim(),
           email: profile.email.trim(),
-          role: profile.role.trim(),
           avatarUrl: nextAvatar,
         }),
       });
@@ -433,18 +431,6 @@ export default function ProfilePage() {
             <FieldError name="name" />
           </label>
 
-          {/* Role */}
-          <label className="block">
-            <span className="text-xs font-medium text-slate-500">Role</span>
-              <input
-                value={profile.role}
-                onChange={(e) => setProfile({ ...profile, role: e.target.value })}
-                disabled={loadingProfile || saving}
-                placeholder="Product Manager"
-                className="mt-1 w-full border-0 border-b border-slate-300 bg-transparent px-0 py-3 text-sm shadow-none disabled:opacity-60 dark:border-slate-700 dark:text-slate-100 focus:border-accent-500 focus:outline-none focus:ring-0 transition"
-              />
-          </label>
-
           {/* Email */}
           <label className="block sm:col-span-2">
             <span className="text-xs font-medium text-slate-500">
@@ -475,17 +461,19 @@ export default function ProfilePage() {
       <Card>
         <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Usage summary</h3>
         <div className="mt-4 grid gap-3 sm:grid-cols-3">
-          <div className="rounded-2xl bg-slate-100 p-4 dark:bg-slate-900">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900">
             <p className="text-xs text-slate-500">Total chats</p>
             <p className="text-xl font-semibold text-slate-900 dark:text-slate-100">{analytics.totalChats}</p>
           </div>
-          <div className="rounded-2xl bg-slate-100 p-4 dark:bg-slate-900">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900">
             <p className="text-xs text-slate-500">Messages sent</p>
             <p className="text-xl font-semibold text-slate-900 dark:text-slate-100">{analytics.totalMessages}</p>
           </div>
-          <div className="rounded-2xl bg-slate-100 p-4 dark:bg-slate-900">
-            <p className="text-xs text-slate-500">Saved prompts</p>
-            <p className="text-xl font-semibold text-slate-900 dark:text-slate-100">{favorites.length}</p>
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900">
+            <p className="text-xs text-slate-500">Saved prompts used</p>
+            <p className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+              {analytics.promptFrequency.reduce((sum, prompt) => sum + prompt.value, 0)}
+            </p>
           </div>
         </div>
       </Card>

@@ -30,7 +30,7 @@ export default function ChatWindow({
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.32, ease: 'easeOut' }}
-      className="flex min-h-[calc(100vh-12rem)] min-w-0 flex-col rounded-2xl border border-white/70 bg-white/80 shadow-lg shadow-slate-200/5 backdrop-blur-lg dark:border-slate-800 dark:bg-slate-950/80 dark:shadow-slate-950/5 sm:rounded-3xl lg:h-[calc(100vh-8rem)] lg:min-h-[640px]"
+      className="flex min-h-[calc(100vh-12rem)] min-w-0 flex-col rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950/90 sm:rounded-3xl lg:h-[calc(100vh-8rem)] lg:min-h-[640px]"
     >
       <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-6">
         <div className="min-w-0">
@@ -51,7 +51,7 @@ export default function ChatWindow({
             animate={{ opacity: 1, scale: 1 }}
             className="flex min-h-[240px] flex-1 flex-col items-center justify-center text-center"
           >
-            <div className="max-w-md rounded-2xl bg-white/5 p-5 backdrop-blur-md dark:bg-white/[0.02] sm:p-6">
+            <div className="max-w-md rounded-2xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-800 dark:bg-slate-900/50 sm:p-6">
               <p className="text-lg font-semibold text-slate-950 dark:text-slate-100">
                 Start a conversation
               </p>
